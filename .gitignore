@@ -166,6 +166,9 @@ checkpoint/
 *.DS_Store
 analyze.ipynb
 data/audioset/
-data/download_audioset.py
-datafiles/audioset.json
+exp31_water drops_mixture.wav
+lightning_logs/
+query_embeddings_male_female.png
+query_embeddings_noise_vs_speech.png
+separated_audio.wav
 workspace/
