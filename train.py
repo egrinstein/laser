@@ -4,7 +4,6 @@ import os
 import pathlib
 from typing import List, NoReturn
 import lightning.pytorch as pl
-from lightning.pytorch.strategies import DDPStrategy
 from torch.utils.tensorboard import SummaryWriter
 from data.datamodules import *
 from utils import create_logging, parse_yaml
@@ -254,7 +253,7 @@ def train(args) -> NoReturn:
     trainer = pl.Trainer(
         accelerator='auto',
         devices='auto',
-        strategy='ddp_find_unused_parameters_true',
+        #strategy='ddp_find_unused_parameters_true',
         num_nodes=num_nodes,
         precision="32-true",
         logger=None,

@@ -2,17 +2,21 @@ import random
 import torch
 import torch.nn as nn
 import torchaudio
+
 from models.CLAP.open_clip import create_model
 from models.CLAP.training.data import get_audio_features
 from transformers import RobertaTokenizer
+
+from ontology.caption_to_ontology import caption_to_random_command
 
 
 class CLAP_Encoder(nn.Module):
     def __init__(
         self,
-        pretrained_path='checkpoint/music_speech_audioset_epoch_15_esc_89.98.pt',
+        pretrained_path='checkpoint/clap.pt',
         sampling_rate=32000,
         amodel = "HTSAT-base",
+        caption_to_command = True,
     ):
         super().__init__()
         self.device = "cpu"
@@ -40,6 +44,8 @@ class CLAP_Encoder(nn.Module):
 
         self.model.eval()
         self.encoder_type = 'CLAP'
+
+        self.caption_to_command = caption_to_command
 
     def batch_to_list(self, batch):
         ret = []
@@ -91,11 +97,14 @@ class CLAP_Encoder(nn.Module):
 
 
     def get_query_embed(self, modality, audio=None, text=None, use_text_ratio=0.5, device=None):
+        if self.caption_to_command and text:
+            text = [caption_to_random_command(t) for t in text]
+    
         if modality == 'audio':
             embed = self._get_audio_embed(audio)
         elif modality == 'text':
             embed = self._get_text_embed(text)
-        elif modality == 'hybird':
+        elif modality == 'hybrid':
             if random.random() > use_text_ratio:
                 embed = self._get_audio_embed(audio)
             else:

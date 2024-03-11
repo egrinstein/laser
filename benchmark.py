@@ -1,5 +1,4 @@
 import os
-from tqdm import tqdm
 import numpy as np
 from evaluation.evaluate_audioset import AudioSetEvaluator
 from evaluation.evaluate_audiocaps import AudioCapsEvaluator
@@ -11,8 +10,6 @@ from models.clap_encoder import CLAP_Encoder
 
 from utils import (
     load_ss_model,
-    calculate_sdr,
-    calculate_sisdr,
     parse_yaml,
     get_mean_sdr_from_dict,
 )

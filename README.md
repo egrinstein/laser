@@ -36,7 +36,7 @@ Download [model weights](https://huggingface.co/spaces/Audio-AGI/AudioSep/tree/m
 
 
   ```python
-  from pipeline import build_audiosep, inference
+  from pipeline import build_audiosep, separate_audio
   import torch
 
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -51,7 +51,7 @@ Download [model weights](https://huggingface.co/spaces/Audio-AGI/AudioSep/tree/m
   output_file='separated_audio.wav'
 
   # AudioSep processes the audio at 32 kHz sampling rate  
-  inference(model, audio_file, text, output_file, device)
+  separate_audio(model, audio_file, text, output_file, device)
   ```
 
 <hr>
@@ -74,13 +74,13 @@ To load directly from Hugging Face, you can do the following:
   output_file='separated_audio.wav'
 
   # AudioSep processes the audio at 32 kHz sampling rate  
-  inference(model, audio_file, text, output_file, device)
+  separate_audio(model, audio_file, text, output_file, device)
   ```
 <hr>
 
 Use chunk-based inference to save memory:
   ```python
-  inference(model, audio_file, text, output_file, device, use_chunk=True)
+  separate_audio(model, audio_file, text, output_file, device, use_chunk=True)
   ```
 
 ## Training 

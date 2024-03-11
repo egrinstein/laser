@@ -4,7 +4,7 @@
 import torch
 from cog import BasePredictor, Input, Path
 
-from pipeline import build_audiosep, inference
+from pipeline import build_audiosep, separate_audio
 
 
 class Predictor(BasePredictor):
@@ -27,5 +27,5 @@ class Predictor(BasePredictor):
         output_file = "/tmp/separated_audio.wav"
 
         # AudioSep processes the audio at 32 kHz sampling rate
-        inference(self.model, str(audio_file), text, output_file, "cuda")
+        separate_audio(self.model, str(audio_file), text, output_file, "cuda")
         return Path(output_file)

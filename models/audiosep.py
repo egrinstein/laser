@@ -79,13 +79,12 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         )
 
         # calculate text embed for audio-text data
-        if self.query_encoder_type == 'CLAP':
-            conditions = self.query_encoder.get_query_embed(
-                modality='hybird',
-                text=batch_text,
-                audio=segments.squeeze(1),
-                use_text_ratio=self.use_text_ratio,
-            )
+        conditions = self.query_encoder.get_query_embed(
+            modality='text',
+            text=batch_text,
+            audio=segments.squeeze(1),
+            use_text_ratio=self.use_text_ratio,
+        )
 
         input_dict = {
             'mixture': mixtures[:, None, :].squeeze(1),

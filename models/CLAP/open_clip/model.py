@@ -14,14 +14,12 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from .timm_model import TimmModel
 import logging
 from .utils import freeze_batch_norm_2d
 
 from .pann_model import create_pann_model
 from .htsat import create_htsat_model
-from transformers import BertModel, RobertaModel, BartModel, RobertaConfig
-from transformers.tokenization_utils_base import BatchEncoding
+from transformers import BertModel, RobertaModel, BartModel
 
 
 class MLPLayers(nn.Module):
