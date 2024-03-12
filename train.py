@@ -12,6 +12,7 @@ from losses import get_loss_function
 from models.audiosep import AudioSep, get_model_class
 from data.waveform_mixers import SegmentMixer
 from models.clap_encoder import CLAP_Encoder
+from models.tinyclip_encoder import TinyCLIP_Encoder
 from callbacks.base import CheckpointEveryNSteps
 from optimizers.lr_schedulers import get_lr_lambda
 
@@ -220,6 +221,8 @@ def train(args) -> NoReturn:
     
     if query_net == 'CLAP':
         query_encoder = CLAP_Encoder()
+    elif query_net == 'TinyCLIP':
+        query_encoder = TinyCLIP_Encoder()
     else:
         raise NotImplementedError
 
@@ -270,12 +273,18 @@ def train(args) -> NoReturn:
     )
 
     # Fit, evaluate, and save checkpoints.
+
+    # Load checkpoint resume_checkpoint_path
+    if resume_checkpoint_path is not None:
+        weights = torch.load(resume_checkpoint_path, map_location=torch.device('cpu'))
+        pl_model.load_state_dict(weights['state_dict'], strict=False)
+        logging.info(f'Loaded checkpoint from [{resume_checkpoint_path}]')
+
     trainer.fit(
         model=pl_model, 
         train_dataloaders=None,
         val_dataloaders=None,
         datamodule=data_module,
-        ckpt_path=resume_checkpoint_path,
     )
 
 
