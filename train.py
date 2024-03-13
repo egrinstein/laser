@@ -154,6 +154,8 @@ def train(args) -> NoReturn:
     # Read config file.
     configs = parse_yaml(config_yaml)
 
+    device = configs['device']
+
     # Configuration of data
     max_mix_num = configs['data']['max_mix_num']
     sampling_rate = configs['data']['sampling_rate']
@@ -234,9 +236,9 @@ def train(args) -> NoReturn:
 
     # pytorch-lightning model
     pl_model = AudioSep(
+        query_encoder=query_encoder,
         ss_model=ss_model,
         waveform_mixer=segment_mixer,
-        query_encoder=query_encoder,
         loss_function=loss_function,
         optimizer_type=optimizer_type,
         learning_rate=learning_rate,
@@ -254,7 +256,7 @@ def train(args) -> NoReturn:
     callbacks = [checkpoint_every_n_steps]
 
     trainer = pl.Trainer(
-        accelerator='auto',
+        accelerator=device,
         devices='auto',
         #strategy='ddp_find_unused_parameters_true',
         num_nodes=num_nodes,

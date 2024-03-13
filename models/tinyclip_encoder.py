@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from PIL import Image
-from transformers import CLIPProcessor, CLIPModel
+from transformers import AutoTokenizer, CLIPTextModelWithProjection # CLIPProcessor, CLIPModel 
 
 from ontology.caption_to_ontology import caption_to_random_command
 
@@ -15,18 +15,25 @@ class TinyCLIP_Encoder(nn.Module):
         caption_to_command = True,
     ):
         super().__init__()
-        self.device = "cpu"
-        self.precision = "fp32"
+        self.device = _get_device()
+        self.precision = 'fp32'
         self.sampling_rate = sampling_rate
 
-        self.model = CLIPModel.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M")
-        self.processor = CLIPProcessor.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M")
+        self.model = CLIPTextModelWithProjection.from_pretrained(
+            'wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M').to(self.device)
+
+
+        # Load the processor, which is responsible for text and image preprocessing
+        # We only use it for text preprocessing here, which converts a string to a tensor of tokens
+        # self.processor = CLIPProcessor.from_pretrained('wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M')
+        self.processor = AutoTokenizer.from_pretrained('wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M')
+
 
         for p in self.model.parameters():
             p.requires_grad = False
 
         self.model.eval()
-        self.encoder_type = 'CLAP'
+        self.encoder_type = 'TinyCLIP'
 
         self.caption_to_command = caption_to_command
 
@@ -42,8 +49,9 @@ class TinyCLIP_Encoder(nn.Module):
             batch = batch * 2
             double_batch = True
         with torch.no_grad():
-            text_input = self.processor(text=batch, return_tensors="pt", padding=True)
-            embed = self.model.get_text_features(**text_input)
+            text_input = self.tokenizer(batch)
+            #embed = self.model.get_text_features(**text_input)
+            embed = self.model(**text_input).text_embeds
         if double_batch:
             embed = embed[0].unsqueeze(0)
         
@@ -58,12 +66,22 @@ class TinyCLIP_Encoder(nn.Module):
    
         return embed.float()
 
-    def tokenizer(self, text):
-        result = self.tokenize(
-            text,
-            padding="max_length",
-            truncation=True,
-            max_length=512,
-            return_tensors="pt",
-        )
-        return {k: v.squeeze(0) for k, v in result.items()}
+    def tokenizer(self, text_batch):
+        text_input = self.processor(text=text_batch, return_tensors='pt', padding=True)
+
+        # Move text input to the device
+        text_input = {k: v.to(self.device) for k, v in text_input.items()}
+        return text_input
+
+
+def _get_device():
+    return torch.device('cpu')
+
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+    elif torch.backends.mps.is_available():
+        device = torch.device('mps')
+    else:
+        device = torch.device('cpu')
+
+    return device

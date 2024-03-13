@@ -1,11 +1,10 @@
-import yaml
-from typing import List
 import torch
 import numpy as np
 import librosa
 from scipy.io.wavfile import write
 from utils import ignore_warnings, parse_yaml, load_ss_model
 from models.clap_encoder import CLAP_Encoder
+
 
 def build_audiosep(config_yaml, checkpoint_path, device):
     ignore_warnings()

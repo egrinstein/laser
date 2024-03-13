@@ -23,6 +23,8 @@ def create_template_json_audioset(data_dir, output_json):
     data = []
     for label in tqdm(os.listdir(data_dir)):
         label_dir = os.path.join(data_dir, label)
+        if not os.path.isdir(label_dir):
+            continue
         for audio_file in os.listdir(label_dir):
             audio_file_path = os.path.join(label_dir, audio_file)
             data.append({

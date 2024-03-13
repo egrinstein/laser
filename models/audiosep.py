@@ -14,9 +14,9 @@ from huggingface_hub import PyTorchModelHubMixin
 class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     def __init__(
         self,
+        query_encoder: nn.Module,
         ss_model: nn.Module = None,
         waveform_mixer = None,
-        query_encoder: nn.Module = CLAP_Encoder().eval(),
         loss_function = None,
         optimizer_type: str = None,
         learning_rate: float = None,

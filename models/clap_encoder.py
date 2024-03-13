@@ -19,7 +19,6 @@ class CLAP_Encoder(nn.Module):
         caption_to_command = True,
     ):
         super().__init__()
-        self.device = "cpu"
         self.precision = "fp32"
         self.amodel = amodel  # or 'PANN-14'
         self.tmodel = "roberta"  # the best text encoder in our training
