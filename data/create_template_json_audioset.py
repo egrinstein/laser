@@ -19,6 +19,9 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+MIN_SIZE_IN_BYTES = 5000
+
+
 def create_template_json_audioset(data_dir, output_json):
     data = []
     for label in tqdm(os.listdir(data_dir)):
@@ -27,6 +30,9 @@ def create_template_json_audioset(data_dir, output_json):
             continue
         for audio_file in os.listdir(label_dir):
             audio_file_path = os.path.join(label_dir, audio_file)
+            if os.path.getsize(audio_file_path) < MIN_SIZE_IN_BYTES:
+                os.remove(audio_file_path)
+                continue
             data.append({
                 "wav": audio_file_path,
                 "caption": label
