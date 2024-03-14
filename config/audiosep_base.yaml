@@ -32,7 +32,7 @@ train:
     num_workers: 6
     loss_type: l1_wav
     sync_batchnorm: True
-    batch_size_per_device: 12
+    batch_size_per_device: 6
     steps_per_epoch: 10000  # Every 10000 steps is called an `epoch`.
     evaluate_step_frequency: 10000     # Evaluate every #evaluate_step_frequency steps.
     save_step_frequency: 20000  # Save every #save_step_frequency steps.

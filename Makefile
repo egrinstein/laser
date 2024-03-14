@@ -6,3 +6,6 @@ train:
 
 dataset:
 	@python data/create_template_json_audioset.py --data_dir ~/datasets/audioset/wavs --output_json datafiles/audioset.json
+
+submit:
+	@qsub qsub.pbs

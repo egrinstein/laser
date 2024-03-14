@@ -5,7 +5,7 @@
 #PBS -N audiosep_commands
 
 module load anaconda3/personal
-source activate py39
+source activate audiosep
 
 cd $PBS_O_WORKDIR/
 
