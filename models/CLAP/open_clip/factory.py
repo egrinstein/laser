@@ -72,7 +72,6 @@ def create_model(
     tmodel_name: str,
     pretrained: str = "",
     precision: str = "fp32",
-    device: torch.device = torch.device("cpu"),
     jit: bool = False,
     force_quick_gelu: bool = False,
     openai_model_cache_dir: str = os.path.expanduser("~/.cache/clip"),
@@ -104,7 +103,6 @@ def create_model(
         model = load_openai_model(
             "ViT-B-16",
             model_cfg,
-            device=device,
             jit=jit,
             cache_dir=openai_model_cache_dir,
             enable_fusion=enable_fusion,
@@ -230,6 +228,7 @@ def create_model(
             for n in param_names:
                 print(n, "\t", "Loaded" if n in audio_ckpt else "Unloaded")
 
+        device = torch.device('cpu')
         model.to(device=device)
         if precision == "fp16":
             assert device.type != "cpu"

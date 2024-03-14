@@ -8,4 +8,14 @@ dependencies:
       - numpy
       - lightning
       - tensorboard
+      - librosa
+      - torchlibrosa
+      - transformers
+      - ftfy
+      - braceexpand
+      - wget
+      - pandas
+      - webdataset
+      - pyloudnorm
   - torchaudio
+  - torchvision

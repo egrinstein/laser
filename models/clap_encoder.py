@@ -13,7 +13,7 @@ from ontology.caption_to_ontology import caption_to_random_command
 class CLAP_Encoder(nn.Module):
     def __init__(
         self,
-        pretrained_path='checkpoint/clap.pt',
+        pretrained_path='checkpoint/music_speech_audioset_epoch_15_esc_89.98.pt',
         sampling_rate=32000,
         amodel = "HTSAT-base",
         caption_to_command = True,
@@ -33,7 +33,6 @@ class CLAP_Encoder(nn.Module):
             self.tmodel,
             self.pretrained,
             precision=self.precision,
-            device=self.device,
             enable_fusion=self.enable_fusion,
             fusion_type=self.fusion_type,
         )

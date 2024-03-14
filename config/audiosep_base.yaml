@@ -13,7 +13,7 @@ data:
     max_mix_num: 2
 
 model:
-    query_net: TinyCLIP
+    query_net: CLAP
     condition_size: 512
     model_type: ResUNet30
     input_channels: 1
