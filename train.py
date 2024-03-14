@@ -154,8 +154,6 @@ def train(args) -> NoReturn:
     # Read config file.
     configs = parse_yaml(config_yaml)
 
-    device = configs['device']
-
     # Configuration of data
     max_mix_num = configs['data']['max_mix_num']
     sampling_rate = configs['data']['sampling_rate']
@@ -220,7 +218,6 @@ def train(args) -> NoReturn:
         higher_db=higher_db
     )
 
-    
     if query_net == 'CLAP':
         query_encoder = CLAP_Encoder()
     elif query_net == 'TinyCLIP':
@@ -255,6 +252,7 @@ def train(args) -> NoReturn:
 
     callbacks = [checkpoint_every_n_steps]
 
+    device = configs['device'] if configs['device'] else 'auto'
     trainer = pl.Trainer(
         accelerator=device,
         devices='auto',

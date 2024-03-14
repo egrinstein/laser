@@ -1,8 +1,6 @@
-import requests
 import torch
 import torch.nn as nn
 
-from PIL import Image
 from transformers import AutoTokenizer, CLIPTextModelWithProjection # CLIPProcessor, CLIPModel 
 
 from ontology.caption_to_ontology import caption_to_random_command
@@ -13,21 +11,21 @@ class TinyCLIP_Encoder(nn.Module):
         self,
         sampling_rate=32000,
         caption_to_command = True,
+        force_cpu=False
     ):
         super().__init__()
-        self.device = _get_device()
+
+        self.device = torch.device('cpu') if force_cpu else _get_device()
         self.precision = 'fp32'
         self.sampling_rate = sampling_rate
 
         self.model = CLIPTextModelWithProjection.from_pretrained(
             'wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M').to(self.device)
 
-
         # Load the processor, which is responsible for text and image preprocessing
         # We only use it for text preprocessing here, which converts a string to a tensor of tokens
         # self.processor = CLIPProcessor.from_pretrained('wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M')
         self.processor = AutoTokenizer.from_pretrained('wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M')
-
 
         for p in self.model.parameters():
             p.requires_grad = False
@@ -75,8 +73,6 @@ class TinyCLIP_Encoder(nn.Module):
 
 
 def _get_device():
-    return torch.device('cpu')
-
     if torch.cuda.is_available():
         device = torch.device('cuda')
     elif torch.backends.mps.is_available():

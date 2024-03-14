@@ -39,4 +39,4 @@ train:
     early_stop_steps: 10000001
     random_seed: 1234
 
-device: cpu
+device: null
