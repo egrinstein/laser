@@ -37,6 +37,7 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
 
     print(f'-------  Start Evaluation  -------')
 
+    msgs = []
 
     # evaluation on AudioCaps
     if os.path.exists('evaluation/data/audiocaps'):
@@ -44,6 +45,7 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
         SISDR, SDRi = audiocaps_evaluator(pl_model)
         msg_audiocaps = "AudioCaps Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
         print(msg_audiocaps)
+        msgs.append(msg_audiocaps)
 
     # evaluation on Clotho
     if os.path.exists('evaluation/data/clotho'):
@@ -51,6 +53,7 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
         SISDR, SDRi = clotho_evaluator(pl_model)
         msg_clotho = "Clotho Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
         print(msg_clotho)
+        msgs.append(msg_clotho)
     
     # evaluation on VGGSound+ (YAN)
     if os.path.exists('evaluation/data/vggsound'):
@@ -58,13 +61,15 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
         SISDR, SDRi = vggsound_evaluator(pl_model)
         msg_vgg = "VGGSound Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
         print(msg_vgg)
-    
+        msgs.append(msg_vgg)
+
     # evaluation on MUSIC
     if os.path.exists('evaluation/data/music'):
         music_evaluator = MUSICEvaluator()
         SISDR, SDRi = music_evaluator(pl_model)
         msg_music = "MUSIC Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
         print(msg_music)
+        msgs.append(msg_music)
 
     # evaluation on ESC-50
     if os.path.exists('evaluation/data/esc50'):
@@ -72,6 +77,7 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
         SISDR, SDRi = esc50_evaluator(pl_model)
         msg_esc50 = "ESC-50 Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
         print(msg_esc50)
+        msgs.append(msg_esc50)
 
     # evaluation on AudioSet
     if os.path.exists('evaluation/data/audioset'):
@@ -84,10 +90,11 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
             median_sdris[class_id] = np.nanmedian(stats_dict["sdris_dict"][class_id])
             median_sisdrs[class_id] = np.nanmedian(stats_dict["sisdrs_dict"][class_id])
 
-            SDRi = get_mean_sdr_from_dict(median_sdris)
-            SISDR = get_mean_sdr_from_dict(median_sisdrs)
-            msg_audioset = "AudioSet Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
-            print(msg_audioset)
+        SDRi = get_mean_sdr_from_dict(median_sdris)
+        SISDR = get_mean_sdr_from_dict(median_sisdrs)
+        msg_audioset = "AudioSet Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
+        print(msg_audioset)
+        msgs.append(msg_audioset)
 
     # open file in write mode
     log_path = os.path.join(log_dir, 'eval_results.txt')

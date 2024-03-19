@@ -71,7 +71,8 @@ class AudioSetEvaluator:
         
         print('Evaluation on AudioSet with [text label] queries.')
         
-        for class_id in tqdm(range(self.classes_num)):
+        progress_bar = tqdm(range(self.classes_num))
+        for class_id in progress_bar:
 
             sub_dir = os.path.join(
                 self.audios_dir,
@@ -119,9 +120,18 @@ class AudioSetEvaluator:
                 sdri = sdr - sdr_no_sep
                 sisdr = calculate_sisdr(ref=source, est=sep_segment)
 
-
                 sisdrs_dict[class_id].append(sisdr)
                 sdris_dict[class_id].append(sdri)
+
+            # Update tqdm progress bar
+            progress_bar.set_postfix(
+                {
+                    "class_id": class_id,
+                    "SI-SDR": np.nanmedian(sisdrs_dict[class_id]),
+                    "SDR": np.nanmedian(sdris_dict[class_id]),
+                }
+            )
+
 
 
         stats_dict = {
