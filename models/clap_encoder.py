@@ -16,7 +16,7 @@ class CLAP_Encoder(nn.Module):
         pretrained_path='checkpoint/music_speech_audioset_epoch_15_esc_89.98.pt',
         sampling_rate=32000,
         amodel = "HTSAT-base",
-        caption_to_command = True,
+        caption_to_command = False,
     ):
         super().__init__()
         self.precision = "fp32"

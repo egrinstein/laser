@@ -2,7 +2,6 @@ from typing import Dict, List, Optional, NoReturn
 import torch
 import lightning.pytorch as pl
 from torch.utils.data import DataLoader
-from data.audiotext_dataset import AudioTextDataset
 
 
 class DataModule(pl.LightningDataModule):
@@ -102,7 +101,8 @@ def collate_fn(list_data_dict):
         }
     """
     
-    at_list_data_dict = [data_dict for data_dict in list_data_dict if data_dict['modality']=='audio_text']
+    at_list_data_dict = [
+        data_dict for data_dict in list_data_dict if data_dict['modality'] == 'audio_text']
 
     at_data_dict = {}
     

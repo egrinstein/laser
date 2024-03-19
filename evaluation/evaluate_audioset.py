@@ -153,7 +153,6 @@ class AudioSetEvaluator:
                 audio_name).group(1) for audio_name in audio_names]
 
         audio_names = sorted(list(set(audio_names)))
-
         return audio_names
 
     @staticmethod

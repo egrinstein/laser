@@ -162,7 +162,6 @@ cython_debug/
 # Project specific
 checkpoint/
 
-
 *.DS_Store
 analyze.ipynb
 data/audioset/
@@ -173,3 +172,4 @@ query_embeddings_noise_vs_speech.png
 separated_audio.wav
 workspace/
 evaluation/data
+datafiles/audioset.json
