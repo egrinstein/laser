@@ -4,6 +4,10 @@ import random
 POSITIVE_QUERIES = [
     "Keep the %",
     "Enhance the %",
+    "Amplify the %",
+    "Boost the %",
+    "Increase the %",
+    "Focus on the %",
 ]
 
 NEGATIVE_QUERIES = [
@@ -20,11 +24,18 @@ for positive_query in POSITIVE_QUERIES:
         connector = random.choice(connectors)
         MIXED_QUERIES.append(positive_query + connector + negative_query.lower())
 
+DESCIPTIVE_QUERIES = [
+    "An excerpt of % and %.",
+    "A clip of % and %.",
+    "This is an audio of % and %."
+    "This clip plays an audio of % and %."
+]
 
 COMMAND_TYPES = [
     "positive",
     "negative",
-    "mixed"
+    "mixed",
+    "descriptive"
 ]
 
 
