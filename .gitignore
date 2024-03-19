@@ -172,3 +172,4 @@ query_embeddings_male_female.png
 query_embeddings_noise_vs_speech.png
 separated_audio.wav
 workspace/
+evaluation/data

@@ -18,6 +18,7 @@ NEGATIVE_QUERIES = [
 
 MIXED_QUERIES = []
 
+# TODO: do the inverse as well (negative first)
 for positive_query in POSITIVE_QUERIES:
     for negative_query in NEGATIVE_QUERIES:
         connectors = ["and ", ", "]
@@ -33,9 +34,9 @@ DESCIPTIVE_QUERIES = [
 
 COMMAND_TYPES = [
     "positive",
-    "negative",
-    "mixed",
     "descriptive"
+    # "negative",
+    # "mixed",
 ]
 
 
@@ -43,9 +44,13 @@ def caption_to_random_command(caption):
     command_type = random.choice(COMMAND_TYPES)
     if command_type == "positive":
         query = random.choice(POSITIVE_QUERIES)
+    elif command_type == "descriptive":
+        query = random.choice(DESCIPTIVE_QUERIES)
     elif command_type == "negative":
+        raise NotImplementedError("Add negative queries")
         query = random.choice(NEGATIVE_QUERIES)
     elif command_type == "mixed":
+        raise NotImplementedError("Add negative queries")
         query = random.choice(MIXED_QUERIES)
     return query.replace("%", caption)
 

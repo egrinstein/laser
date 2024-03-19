@@ -9,3 +9,6 @@ dataset:
 
 submit:
 	@qsub qsub.pbs
+
+benchmark:
+	@python benchmark.py --checkpoint_path audiosep_base_4M_steps.ckpt
