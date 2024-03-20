@@ -1,0 +1,60 @@
+import random
+
+
+POSITIVE_QUERIES = [
+    "Keep the {}",
+    "Enhance the {}",
+    "Amplify the {}",
+    "Boost the {}",
+    "Increase the {}",
+    "Focus on the {}",
+]
+
+NEGATIVE_QUERIES = [
+    "Remove the {}",
+    "Filter out the {}",
+    "Reduce the {}",
+]
+
+MIXED_QUERIES = []
+
+# TODO: do the inverse as well (negative first)
+for positive_query in POSITIVE_QUERIES:
+    for negative_query in NEGATIVE_QUERIES:
+        connectors = ["and ", ", "]
+        connector = random.choice(connectors)
+        MIXED_QUERIES.append(positive_query + connector + negative_query.lower())
+
+DESCIPTIVE_QUERIES = [
+    "An excerpt of {}",
+    "A clip of {}",
+    "This is an audio of {}"
+    "This clip playing an audio of {}"
+]
+
+COMMAND_TYPES = [
+    "positive",
+    "descriptive"
+    # "negative",
+    # "mixed",
+]
+
+
+def caption_to_random_command(caption, interferer_captions):
+    command_type = random.choice(COMMAND_TYPES)
+    if command_type == "positive":
+        query = random.choice(POSITIVE_QUERIES).format(caption)
+    elif command_type == "descriptive":
+        query = random.choice(DESCIPTIVE_QUERIES).format(caption)
+    elif command_type == "negative":
+        query = random.choice(NEGATIVE_QUERIES).format(
+            interferer_captions[0]) # TODO: add multiple interferers
+    elif command_type == "mixed":
+        query = random.choice(MIXED_QUERIES).format(
+            caption, interferer_captions[0])
+
+    return query
+
+if __name__ == "__main__":
+    caption = "male speech"
+    print(caption_to_random_command(caption))

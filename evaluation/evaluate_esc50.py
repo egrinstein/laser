@@ -14,12 +14,9 @@ import lightning.pytorch as pl
 from models.clap_encoder import CLAP_Encoder
 
 sys.path.append('../AudioSep/')
-from utils import (
-    load_ss_model,
+from models.metrics import (
     calculate_sdr,
     calculate_sisdr,
-    parse_yaml,
-    get_mean_sdr_from_dict,
 )
 
 
@@ -72,10 +69,9 @@ class ESC50Evaluator:
                                 
                 text = [caption]
 
-                conditions = pl_model.query_encoder.get_query_embed(
+                conditions = pl_model.query_encoder(
                     modality='text',
                     text=text,
-                    device=device 
                 )
                     
                 input_dict = {

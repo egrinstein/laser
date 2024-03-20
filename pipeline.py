@@ -22,10 +22,9 @@ def separate_audio(model, audio_file, text, output_file, device='cuda', use_chun
     with torch.no_grad():
         text = [text]
 
-        conditions = model.query_encoder.get_query_embed(
+        conditions = model.query_encoder(
             modality='text',
             text=text,
-            device=device
         )
 
         input_dict = {

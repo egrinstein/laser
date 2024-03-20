@@ -10,7 +10,7 @@ import librosa
 import lightning.pytorch as pl
 
 sys.path.append('../AudioSep/')
-from utils import (
+from models.metrics import (
     calculate_sdr,
     calculate_sisdr,
 )
@@ -72,10 +72,9 @@ class VGGSoundEvaluator:
                 sdr_no_sep = calculate_sdr(ref=source, est=mixture)
                                 
                 text = [labels]
-                conditions = pl_model.query_encoder.get_query_embed(
+                conditions = pl_model.query_encoder(
                     modality='text',
                     text=text,
-                    device=device 
                 )
                     
                 input_dict = {

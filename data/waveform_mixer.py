@@ -6,9 +6,9 @@ import torch.nn as nn
 import pyloudnorm as pyln
 
 
-class SegmentMixer(nn.Module):
+class WaveformMixer(nn.Module):
     def __init__(self, max_mix_num, lower_db, higher_db):
-        super(SegmentMixer, self).__init__()
+        super().__init__()
 
         self.max_mix_num = max_mix_num
         self.loudness_param = {
@@ -16,7 +16,7 @@ class SegmentMixer(nn.Module):
             'higher_db': higher_db,
         }
 
-    def __call__(self, waveforms):
+    def __call__(self, waveforms, texts=None):
         
         batch_size = waveforms.shape[0]
 
@@ -25,28 +25,44 @@ class SegmentMixer(nn.Module):
             'mixture': [],
         }
 
+        mixed_texts = []
         for n in range(0, batch_size):
-
             segment = waveforms[n].clone()
-
             # create zero tensors as the background template
             noise = torch.zeros_like(segment)
 
             mix_num = random.randint(2, self.max_mix_num)
             assert mix_num >= 2
 
-            for i in range(1, mix_num):
-                next_segment = waveforms[(n + i) % batch_size]
+            n_tracks_added = 1
+            n_track_to_add = (n + 1) % batch_size
+            mixed_texts_n = []
+            while n_tracks_added < mix_num:
+                if texts is not None:
+                    # Make sure the track text (i.e., class) being added
+                    # is different from the class of the target track
+                    if texts[n] == texts[n_track_to_add]:
+                        n_track_to_add = (n_track_to_add + 1) % batch_size
+                        if n_track_to_add == n:
+                            # If all the tracks have the same class, raise an exception (to avoid infinite loop)
+                            raise ValueError("All the tracks in the batch have the same class.")
+                        continue
+
+                    mixed_texts_n.append(texts[n_track_to_add])
+
+                next_segment = waveforms[n_track_to_add]
                 rescaled_next_segment = dynamic_loudnorm(audio=next_segment, reference=segment, **self.loudness_param)
                 noise += rescaled_next_segment
+
+                n_tracks_added += 1
 
             # randomly normalize background noise
             noise = dynamic_loudnorm(audio=noise, reference=segment, **self.loudness_param)
 
-            # create audio mixyure
+            # create audio mixture
             mixture = segment + noise
 
-            # declipping if need be
+            # apply declipping, if needed
             max_value = torch.max(torch.abs(mixture))
             if max_value > 1:
                 segment *= 0.9 / max_value
@@ -55,15 +71,20 @@ class SegmentMixer(nn.Module):
             data_dict['segment'].append(segment)
             data_dict['mixture'].append(mixture)
 
+            if texts is not None:
+                mixed_texts.append(mixed_texts_n)
+
         for key in data_dict.keys():
             data_dict[key] = torch.stack(data_dict[key], dim=0)
 
         # return data_dict
-        return data_dict['mixture'], data_dict['segment']
+        output = (data_dict['mixture'], data_dict['segment'])
+        if texts is not None:
+            output += (mixed_texts,)
+        return output
 
 
 def rescale_to_match_energy(segment1, segment2):
-
     ratio = get_energy_ratio(segment1, segment2)
     rescaled_segment1 = segment1 / ratio
     return rescaled_segment1 
@@ -74,7 +95,6 @@ def get_energy(x):
 
 
 def get_energy_ratio(segment1, segment2):
-
     energy1 = get_energy(segment1)
     energy2 = max(get_energy(segment2), 1e-10)
     ratio = (energy1 / energy2) ** 0.5

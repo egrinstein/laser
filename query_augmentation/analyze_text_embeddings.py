@@ -45,8 +45,8 @@ def main(queries):
 
     # 2. Get the query embeddings
     print("Getting the query embeddings...")
-    query_embeddings = query_encoder.get_query_embed(
-        modality="text", text=queries, device="cuda"
+    query_embeddings = query_encoder(
+        modality="text", text=queries,
     )
 
     # Get the distance matrix between the query embeddings

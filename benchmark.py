@@ -13,7 +13,7 @@ from models.clap_encoder import CLAP_Encoder
 from utils import (
     load_ss_model,
     parse_yaml,
-    get_mean_sdr_from_dict,
+    get_mean_from_dict_values,
 )
 
 def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
@@ -82,17 +82,11 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
     # evaluation on AudioSet
     if os.path.exists('evaluation/data/audioset'):
         audioset_evaluator = AudioSetEvaluator()
-        stats_dict = audioset_evaluator(pl_model=pl_model)
-        median_sdris = {}
-        median_sisdrs = {}
-
-        for class_id in range(527):
-            median_sdris[class_id] = np.nanmedian(stats_dict["sdris_dict"][class_id])
-            median_sisdrs[class_id] = np.nanmedian(stats_dict["sisdrs_dict"][class_id])
-
-        SDRi = get_mean_sdr_from_dict(median_sdris)
-        SISDR = get_mean_sdr_from_dict(median_sisdrs)
-        msg_audioset = "AudioSet Avg SDRi: {:.3f}, SISDR: {:.3f}".format(SDRi, SISDR)
+        stats_dict = audioset_evaluator(pl_model=pl_model, average=True)
+        
+        SDRi, SISDR = stats_dict["sdris_dict"], stats_dict["sisdrs_dict"]
+        msg_audioset = "AudioSet Avg SDRi: {:.3f}, SISDR: {:.3f}".format(
+            SDRi, SISDR)
         print(msg_audioset)
         msgs.append(msg_audioset)
 

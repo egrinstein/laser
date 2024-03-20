@@ -2,15 +2,17 @@ import argparse
 import logging
 import os
 import pathlib
-from typing import List, NoReturn
+from data.audiotext_dataset import AudioTextDataset
 import lightning.pytorch as pl
+
+from typing import List, NoReturn
 from torch.utils.tensorboard import SummaryWriter
 from data.datamodules import *
 from utils import create_logging, parse_yaml
 from models.resunet import *
 from losses import get_loss_function
 from models.audiosep import AudioSep, get_model_class
-from data.waveform_mixers import SegmentMixer
+from data.waveform_mixer import WaveformMixer
 from models.clap_encoder import CLAP_Encoder
 from models.tinyclip_encoder import TinyCLIP_Encoder
 from callbacks.base import CheckpointEveryNSteps
@@ -125,7 +127,6 @@ def get_data_module(
         max_clip_len=segment_seconds,
     )
     
-    
     # data module
     data_module = DataModule(
         train_dataset=dataset,
@@ -212,7 +213,7 @@ def train(args) -> NoReturn:
     # loss function
     loss_function = get_loss_function(loss_type)
 
-    segment_mixer = SegmentMixer(
+    segment_mixer = WaveformMixer(
         max_mix_num=max_mix_num,
         lower_db=lower_db, 
         higher_db=higher_db

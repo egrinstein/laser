@@ -1,13 +1,13 @@
-from typing import Any, Callable, Dict
 import random
 import lightning.pytorch as pl
-import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import LambdaLR
+from torchmetrics.functional.audio import signal_distortion_ratio
 
 from huggingface_hub import PyTorchModelHubMixin
+from torch.optim.lr_scheduler import LambdaLR
 
+from query_augmentation import caption_to_random_command
 
 class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     def __init__(
@@ -19,7 +19,8 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         optimizer_type: str = None,
         learning_rate: float = None,
         lr_lambda_func = None,
-        use_text_ratio: float =1.0,
+        use_text_ratio: float = 1.0,
+        query_augmentation = True
     ):
         r"""Pytorch Lightning wrapper of PyTorch model, including forward,
         optimization of model, etc.
@@ -42,7 +43,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.optimizer_type = optimizer_type
         self.learning_rate = learning_rate
         self.lr_lambda_func = lr_lambda_func
-
+        self.query_augmentation = query_augmentation
 
     def forward(self, x):
         pass
@@ -70,14 +71,20 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         batch_text = batch_audio_text_dict['text']
         batch_audio = batch_audio_text_dict['waveform']
-        device = batch_audio.device
         
-        mixtures, segments = self.waveform_mixer(
-            waveforms=batch_audio
+        mixtures, segments, mixture_texts = self.waveform_mixer(
+            waveforms=batch_audio, texts=batch_text
         )
 
+        # augment text data (convert caption such as "sound of dog" to "enhance sound of dog")
+        if self.query_augmentation:
+            batch_text = [
+                caption_to_random_command(t, mt)
+                for t, mt in zip(batch_text, mixture_texts)
+            ]
+
         # calculate text embed for audio-text data
-        conditions = self.query_encoder.get_query_embed(
+        conditions = self.query_encoder(
             modality='text',
             text=batch_text,
             audio=segments.squeeze(1),
@@ -94,27 +101,37 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         }
 
         self.ss_model.train()
-        sep_segment = self.ss_model(input_dict)['waveform']
-        sep_segment = sep_segment.squeeze()
+        model_output = self.ss_model(input_dict)['waveform']
+        model_output = model_output.squeeze()
         # (batch_size, 1, segment_samples)
 
         output_dict = {
-            'segment': sep_segment,
+            'segment': model_output,
         }
 
         # Calculate loss.
         loss = self.loss_function(output_dict, target_dict)
 
-        self.log_dict({"train_loss": loss})
+        log_dict = {"train_loss": loss}
         
+        if batch_idx % 1 == 0: # Modify this to control the frequency of metrics computation
+            if model_output.device.type == "mps":
+                # SDR calculation is not supported on mps
+                model_output = model_output.cpu()
+                segments = segments.cpu()
+            sdr = signal_distortion_ratio(model_output, segments.squeeze(1))
+            log_dict["train_sdr"] = sdr.mean()
+
+        self.log_dict(log_dict, prog_bar=True)
+        
+        
+
         return loss
 
     def test_step(self, batch, batch_idx):
         pass
     
     def configure_optimizers(self):
-        r"""Configure optimizer.
-        """
 
         if self.optimizer_type == "AdamW":
             optimizer = optim.AdamW(

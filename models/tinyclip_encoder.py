@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from transformers import AutoTokenizer, CLIPTextModelWithProjection # CLIPProcessor, CLIPModel 
 
-from ontology.caption_to_ontology import caption_to_random_command
+from query_augmentation import caption_to_random_command
 
 
 class TinyCLIP_Encoder(nn.Module):
@@ -56,7 +56,7 @@ class TinyCLIP_Encoder(nn.Module):
         return embed.detach()
 
 
-    def get_query_embed(self, modality, audio=None, text=None, use_text_ratio=0.5, device=None):
+    def __call__(self, modality, audio=None, text=None, use_text_ratio=0.5, device=None):
         if self.caption_to_command and text:
             text = [caption_to_random_command(t) for t in text]
 

@@ -13,14 +13,11 @@ import lightning.pytorch as pl
 from models.clap_encoder import CLAP_Encoder
 
 sys.path.append('../AudioSep/')
-from utils import (
-    load_ss_model,
+from utils import get_mean_from_dict_values
+from models.metrics import (
     calculate_sdr,
     calculate_sisdr,
-    parse_yaml,
-    get_mean_sdr_from_dict,
 )
-
 
 meta_csv_file = "evaluation/metadata/class_labels_indices.csv"
 df = pd.read_csv(meta_csv_file, sep=',')
@@ -60,7 +57,8 @@ class AudioSetEvaluator:
     @torch.no_grad()
     def __call__(
         self,
-        pl_model: pl.LightningModule
+        pl_model: pl.LightningModule,
+        average: bool = False,
     ) -> Dict:
         r"""Evalute."""
 
@@ -99,10 +97,9 @@ class AudioSetEvaluator:
 
                 text = [IX_TO_LB[class_id]]
 
-                conditions = pl_model.query_encoder.get_query_embed(
+                conditions = pl_model.query_encoder(
                     modality='text',
                     text=text,
-                    device=device 
                 )
 
                 input_dict = {
@@ -132,12 +129,20 @@ class AudioSetEvaluator:
                 }
             )
 
-
-
         stats_dict = {
             "sisdrs_dict": sisdrs_dict,
             "sdris_dict": sdris_dict,
         }
+
+        if average:
+            median_sdris = {}
+            median_sisdrs = {}
+
+            for class_id in range(527):
+                median_sdris[class_id] = np.nanmedian(stats_dict["sdris_dict"][class_id])
+                median_sisdrs[class_id] = np.nanmedian(stats_dict["sisdrs_dict"][class_id])
+            stats_dict["sdris_dict"] = get_mean_from_dict_values(median_sdris)
+            stats_dict["sisdrs_dict"] = get_mean_from_dict_values(median_sisdrs)
 
         return stats_dict
 
