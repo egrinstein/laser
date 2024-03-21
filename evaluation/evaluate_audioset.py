@@ -7,10 +7,8 @@ import pandas as pd
 import numpy as np
 import torch
 from tqdm import tqdm
-import pathlib
 import librosa
 import lightning.pytorch as pl
-from models.clap_encoder import CLAP_Encoder
 
 sys.path.append('../AudioSep/')
 from utils import get_mean_from_dict_values

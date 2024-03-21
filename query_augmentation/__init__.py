@@ -44,6 +44,12 @@ def caption_to_random_command(caption: str, interferer_captions: list[str]):
     # Sometimes AudioSet's captions have synonyms separated by commas.
     # For example, one class is Accelerating, revving, vroom
     # We can split these and choose one randomly.
+    
+    if len(interferer_captions) == 0 or len(interferer_captions) > 1:
+        raise ValueError("Only a single interference caption is supported for now.")
+    else:
+        interferer_captions = interferer_captions[0]
+    
     def _parse_text(text: str):
         return random.choice(text.split(",")).lower().strip()
     
@@ -58,10 +64,10 @@ def caption_to_random_command(caption: str, interferer_captions: list[str]):
         query = random.choice(DESCIPTIVE_QUERIES).format(caption)
     elif command_type == "negative":
         query = random.choice(NEGATIVE_QUERIES).format(
-            interferer_captions[0]) # TODO: add multiple interferers
+            interferer_captions)
     elif command_type == "mixed":
         query = random.choice(MIXED_QUERIES).format(
-            caption, interferer_captions[0])
+            caption, interferer_captions)
     else:
         raise ValueError("Invalid command type")
 

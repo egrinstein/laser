@@ -32,7 +32,7 @@ def create_template_json_audioset(data_dir, output_json,
             continue
         for audio_file in os.listdir(label_dir):
             audio_file_path = os.path.join(label_dir, audio_file)
-            if os.path.getsize(audio_file_path) < MIN_SIZE_IN_BYTES:
+            if os.path.getsize(audio_file_path) < MIN_SIZE_IN_BYTES or not audio_file.endswith(".wav") :
                 os.remove(audio_file_path)
                 continue
             data.append({

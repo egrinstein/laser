@@ -13,8 +13,8 @@ from models.clap_encoder import CLAP_Encoder
 from utils import (
     load_ss_model,
     parse_yaml,
-    get_mean_from_dict_values,
 )
+
 
 def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
 
@@ -24,13 +24,12 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
     configs = parse_yaml(config_yaml)
-
     
     # Load model
     query_encoder = CLAP_Encoder().eval()
 
     pl_model = load_ss_model(
-        configs=configs,
+        config_yaml,
         checkpoint_path=checkpoint_path,
         query_encoder=query_encoder
     ).to(device)

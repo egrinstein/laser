@@ -9,12 +9,13 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from query_augmentation import caption_to_random_command
 
+
 class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     def __init__(
         self,
         query_encoder: nn.Module,
+        waveform_mixer: nn.Module,
         ss_model: nn.Module = None,
-        waveform_mixer = None,
         loss_function = None,
         optimizer_type: str = None,
         learning_rate: float = None,
@@ -48,7 +49,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     def forward(self, x):
         pass
 
-    def training_step(self, batch_data_dict, batch_idx):
+    def _step(self, batch_data_dict, batch_idx, compute_sdr=True, sdr_freq=1, prefix='train'):
         r"""Forward a mini-batch data to model, calculate loss function, and
         train for one step. A mini-batch data is evenly distributed to multiple
         devices (if there are) for parallel training.
@@ -109,27 +110,28 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
             'segment': model_output,
         }
 
-        # Calculate loss.
+        # Calculate loss
         loss = self.loss_function(output_dict, target_dict)
 
-        log_dict = {"train_loss": loss}
+        log_dict = {f"{prefix}_loss": loss}
         
-        if batch_idx % 1 == 0: # Modify this to control the frequency of metrics computation
+        if compute_sdr and batch_idx % sdr_freq == 0: # Modify this to control the frequency of metrics computation
             if model_output.device.type == "mps":
                 # SDR calculation is not supported on mps
                 model_output = model_output.cpu()
                 segments = segments.cpu()
             sdr = signal_distortion_ratio(model_output, segments.squeeze(1))
-            log_dict["train_sdr"] = sdr.mean()
+            log_dict[f"{prefix}_sdr"] = sdr.mean()
 
         self.log_dict(log_dict, prog_bar=True)
         
-        
-
         return loss
 
+    def training_step(self, batch_data_dict, batch_idx):
+        return self._step(batch_data_dict, batch_idx, prefix='train')
+
     def test_step(self, batch, batch_idx):
-        pass
+        return self._step(batch, batch_idx, prefix='test')
     
     def configure_optimizers(self):
 

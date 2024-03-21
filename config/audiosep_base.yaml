@@ -2,8 +2,10 @@
 task_name: AudioSep
 
 data:
-    datafiles:
-        - 'datafiles/audioset_train.json'
+    train_datafiles:
+        - 'config/datafiles/audioset_train.json'
+    test_datafiles:
+        - 'config/datafiles/audioset_test.json'
 
     sampling_rate: 32000
     segment_seconds: 5

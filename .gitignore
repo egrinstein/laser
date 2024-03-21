@@ -172,4 +172,4 @@ query_embeddings_noise_vs_speech.png
 separated_audio.wav
 workspace/
 evaluation/data
-datafiles/audioset_*
+config/datafiles/audioset_*

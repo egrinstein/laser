@@ -1,5 +1,4 @@
 import random
-import sre_compile
 import numpy as np
 import torch
 import torch.nn as nn
@@ -7,7 +6,7 @@ import pyloudnorm as pyln
 
 
 class WaveformMixer(nn.Module):
-    def __init__(self, max_mix_num, lower_db, higher_db):
+    def __init__(self, max_mix_num=2, lower_db=-10, higher_db=10):
         super().__init__()
 
         self.max_mix_num = max_mix_num
@@ -28,45 +27,15 @@ class WaveformMixer(nn.Module):
         mixed_texts = []
         for n in range(0, batch_size):
             segment = waveforms[n].clone()
-            # create zero tensors as the background template
-            noise = torch.zeros_like(segment)
 
             mix_num = random.randint(2, self.max_mix_num)
             assert mix_num >= 2
 
-            n_tracks_added = 1
-            n_track_to_add = (n + 1) % batch_size
-            mixed_texts_n = []
-            while n_tracks_added < mix_num:
-                if texts is not None:
-                    # Make sure the track text (i.e., class) being added
-                    # is different from the class of the target track
-                    if texts[n] == texts[n_track_to_add]:
-                        n_track_to_add = (n_track_to_add + 1) % batch_size
-                        if n_track_to_add == n:
-                            # If all the tracks have the same class, raise an exception (to avoid infinite loop)
-                            raise ValueError("All the tracks in the batch have the same class.")
-                        continue
+            noise_track_idxs = self.get_noise_track_idxs(texts, n, mix_num)
+            noise_waveforms = [waveforms[i] for i in noise_track_idxs]
+            mixed_texts_n = [texts[i] for i in noise_track_idxs]
 
-                    mixed_texts_n.append(texts[n_track_to_add])
-
-                next_segment = waveforms[n_track_to_add]
-                rescaled_next_segment = dynamic_loudnorm(audio=next_segment, reference=segment, **self.loudness_param)
-                noise += rescaled_next_segment
-
-                n_tracks_added += 1
-
-            # randomly normalize background noise
-            noise = dynamic_loudnorm(audio=noise, reference=segment, **self.loudness_param)
-
-            # create audio mixture
-            mixture = segment + noise
-
-            # apply declipping, if needed
-            max_value = torch.max(torch.abs(mixture))
-            if max_value > 1:
-                segment *= 0.9 / max_value
-                mixture *= 0.9 / max_value
+            mixture = self.mix_waveforms(segment, noise_waveforms)
 
             data_dict['segment'].append(segment)
             data_dict['mixture'].append(mixture)
@@ -82,6 +51,65 @@ class WaveformMixer(nn.Module):
         if texts is not None:
             output += (mixed_texts,)
         return output
+    
+    def get_noise_track_idxs(self, texts: list[str], n_target, mix_num: int):
+        """
+        Get noise tracks to mix with the target track.
+        This method guarantees that the noise tracks have different classes from the target track.
+
+        The first candidate noise track is the succeeding track of n_target in the batch.
+        If the class of the succeeding track is the same as the target track, the next track is selected.
+        This process is repeated until a noise track with a different class is found.
+        """
+
+        n_available_tracks = len(texts)
+        
+        n_tracks_added = 1
+        n_track_to_add = (n_target + 1) % n_available_tracks
+        mixed_texts_n = []
+        track_ids_to_add = []
+
+        # Find track ids to add in the batch
+        while n_tracks_added < mix_num:
+            if texts is not None:
+                # Make sure the track text (i.e., class) being added
+                # is different from the class of the target track
+                if texts[n_target] == texts[n_track_to_add]:
+                    n_track_to_add = (n_track_to_add + 1) % n_available_tracks
+                    if n_track_to_add == n_target:
+                        # If all the tracks have the same class, raise an exception (to avoid infinite loop)
+                        raise ValueError("All the tracks in the batch have the same class.")
+                    continue
+
+                mixed_texts_n.append(texts[n_track_to_add])
+
+            track_ids_to_add.append(n_track_to_add)
+            n_tracks_added += 1
+
+        return track_ids_to_add
+
+    def mix_waveforms(self, target_track: torch.Tensor, noise_waveforms: list[torch.Tensor]):
+
+        # create zero tensors as the background template
+        noise = torch.zeros_like(target_track)
+        # add tracks to the mixture
+        for next_segment in noise_waveforms:
+            rescaled_next_segment = dynamic_loudnorm(audio=next_segment, reference=target_track, **self.loudness_param)
+            noise += rescaled_next_segment
+
+        # randomly normalize background noise
+        noise = dynamic_loudnorm(audio=noise, reference=target_track, **self.loudness_param)
+
+        # create audio mixture
+        mixture = target_track + noise
+
+        # apply declipping, if needed
+        max_value = torch.max(torch.abs(mixture))
+        if max_value > 1:
+            target_track *= 0.9 / max_value
+            mixture *= 0.9 / max_value
+        
+        return mixture
 
 
 def rescale_to_match_energy(segment1, segment2):

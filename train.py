@@ -2,13 +2,10 @@ import argparse
 import logging
 import os
 import pathlib
-from data.audiotext_dataset import AudioTextDataset
 import lightning.pytorch as pl
 
 from typing import List, NoReturn
 from torch.utils.tensorboard import SummaryWriter
-from data.datamodules import *
-from utils import create_logging, parse_yaml
 from models.resunet import *
 from losses import get_loss_function
 from models.audiosep import AudioSep, get_model_class
@@ -17,6 +14,8 @@ from models.clap_encoder import CLAP_Encoder
 from models.tinyclip_encoder import TinyCLIP_Encoder
 from callbacks.base import CheckpointEveryNSteps
 from optimizers.lr_schedulers import get_lr_lambda
+
+from utils import create_logging, parse_yaml, get_data_module
 
 
 def get_dirs(
@@ -85,57 +84,6 @@ def get_dirs(
 
     return checkpoints_dir, logs_dir, tf_logs_dir, statistics_path
 
- 
-def get_data_module(
-    config_yaml: str,
-    num_workers: int,
-    batch_size: int,
-) -> DataModule:
-    r"""Create data_module. Mini-batch data can be obtained by:
-
-    code-block:: python
-
-        data_module.setup()
-
-        for batch_data_dict in data_module.train_dataloader():
-            print(batch_data_dict.keys())
-            break
-
-    Args:
-        workspace: str
-        config_yaml: str
-        num_workers: int, e.g., 0 for non-parallel and 8 for using cpu cores
-            for preparing data in parallel
-        distributed: bool
-
-    Returns:
-        data_module: DataModule
-    """
-
-    # read configurations
-    configs = parse_yaml(config_yaml)
-    sampling_rate = configs['data']['sampling_rate']
-    segment_seconds = configs['data']['segment_seconds']
-    
-    # audio-text datasets
-    datafiles = configs['data']['datafiles']
-    
-    # dataset
-    dataset = AudioTextDataset(
-        datafiles=datafiles, 
-        sampling_rate=sampling_rate, 
-        max_clip_len=segment_seconds,
-    )
-    
-    # data module
-    data_module = DataModule(
-        train_dataset=dataset,
-        num_workers=num_workers,
-        batch_size=batch_size
-    )
-
-    return data_module
-
 
 def train(args) -> NoReturn:
     r"""Train, evaluate, and save checkpoints.
@@ -157,7 +105,6 @@ def train(args) -> NoReturn:
 
     # Configuration of data
     max_mix_num = configs['data']['max_mix_num']
-    sampling_rate = configs['data']['sampling_rate']
     lower_db = configs['data']['loudness_norm']['lower_db']
     higher_db = configs['data']['loudness_norm']['higher_db']
 
@@ -171,10 +118,7 @@ def train(args) -> NoReturn:
     
     # Configuration of the trainer
     num_nodes = configs['train']['num_nodes']
-    batch_size = configs['train']['batch_size_per_device'] 
     sync_batchnorm = configs['train']['sync_batchnorm'] 
-    num_workers = configs['train']['num_workers']
-    loss_type = configs['train']['loss_type']
     optimizer_type = configs["train"]["optimizer"]["optimizer_type"]
     learning_rate = float(configs['train']["optimizer"]['learning_rate'])
     lr_lambda_type = configs['train']["optimizer"]['lr_lambda_type']
@@ -195,11 +139,7 @@ def train(args) -> NoReturn:
     logging.info(configs)
 
     # data module
-    data_module = get_data_module(
-        config_yaml=config_yaml,
-        batch_size=batch_size,
-        num_workers=num_workers,
-    )
+    data_module = get_data_module(config_yaml)
     
     # model
     Model = get_model_class(model_type=model_type)
@@ -210,10 +150,7 @@ def train(args) -> NoReturn:
         condition_size=condition_size,
     )
 
-    # loss function
-    loss_function = get_loss_function(loss_type)
-
-    segment_mixer = WaveformMixer(
+    waveform_mixer = WaveformMixer(
         max_mix_num=max_mix_num,
         lower_db=lower_db, 
         higher_db=higher_db
@@ -235,9 +172,10 @@ def train(args) -> NoReturn:
     # pytorch-lightning model
     pl_model = AudioSep(
         query_encoder=query_encoder,
+        waveform_mixer=waveform_mixer,
         ss_model=ss_model,
-        waveform_mixer=segment_mixer,
-        loss_function=loss_function,
+        loss_function=get_loss_function(
+            configs['train']['loss_type']),
         optimizer_type=optimizer_type,
         learning_rate=learning_rate,
         lr_lambda_func=lr_lambda_func,
@@ -269,7 +207,6 @@ def train(args) -> NoReturn:
         sync_batchnorm=sync_batchnorm,
         num_sanity_val_steps=2,
         enable_checkpointing=False,
-        enable_progress_bar=True,
         enable_model_summary=True,
     )
 

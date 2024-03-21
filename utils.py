@@ -1,15 +1,18 @@
 import os
-import datetime
 import json
 import logging
-import librosa
-import pickle
 from typing import Dict
 import numpy as np
+from data.waveform_mixer import WaveformMixer
 import torch
 import torch.nn as nn
 import yaml
+
+from losses import get_loss_function
+from models.clap_encoder import CLAP_Encoder
 from models.audiosep import AudioSep, get_model_class
+from data.audiotext_dataset import AudioTextDataset
+from data.datamodules import DataModule
 
 
 def ignore_warnings():
@@ -138,20 +141,21 @@ def get_ss_model(config_yaml) -> nn.Module:
 
 
 def load_ss_model(
-    configs: Dict,
+    config_yaml: str,
     checkpoint_path: str,
-    query_encoder: nn.Module
 ) -> nn.Module:
     r"""Load trained universal source separation model.
 
     Args:
-        configs (Dict)
+        config_yaml: str
         checkpoint_path (str): path of the checkpoint to load
         device (str): e.g., "cpu" | "cuda"
 
     Returns:
         pl_model: pl.LightningModule
     """
+
+    configs = parse_yaml(config_yaml)
 
     ss_model_type = configs["model"]["model_type"]
     input_channels = configs["model"]["input_channels"]
@@ -167,14 +171,22 @@ def load_ss_model(
         condition_size=condition_size,
     )
 
+    query_encoder = CLAP_Encoder().eval()
+
+    waveform_mixer = WaveformMixer(
+        max_mix_num = configs['data']['max_mix_num'],
+        lower_db = configs['data']['loudness_norm']['lower_db'],
+        higher_db = configs['data']['loudness_norm']['higher_db']
+    )
+
     # Load PyTorch Lightning model
     pl_model = AudioSep.load_from_checkpoint(
         checkpoint_path=checkpoint_path,
         strict=False,
         ss_model=ss_model,
-        waveform_mixer=None,
+        waveform_mixer=waveform_mixer,
         query_encoder=query_encoder,
-        loss_function=None,
+        loss_function=get_loss_function(configs['train']['loss_type']),
         optimizer_type=None,
         learning_rate=None,
         lr_lambda_func=None,
@@ -196,3 +208,65 @@ def parse_yaml(config_yaml: str) -> Dict:
 
     with open(config_yaml, "r") as fr:
         return yaml.load(fr, Loader=yaml.FullLoader)
+    
+
+def get_data_module(
+    config_yaml: str,
+) -> DataModule:
+    r"""Create data_module. Mini-batch data can be obtained by:
+
+    code-block:: python
+
+        data_module.setup()
+
+        for batch_data_dict in data_module.train_dataloader():
+            print(batch_data_dict.keys())
+            break
+
+    Args:
+        workspace: str
+        config_yaml: str
+        num_workers: int, e.g., 0 for non-parallel and 8 for using cpu cores
+            for preparing data in parallel
+        distributed: bool
+
+    Returns:
+        data_module: DataModule
+    """
+
+    # read configurations
+    configs = parse_yaml(config_yaml)
+    sampling_rate = configs['data']['sampling_rate']
+    segment_seconds = configs['data']['segment_seconds']
+    batch_size = configs['train']['batch_size_per_device']
+    num_workers = configs['train']['num_workers']
+    
+    # audio-text datasets
+    datafiles = configs['data']['train_datafiles']
+    
+    # dataset
+    dataset = AudioTextDataset(
+        datafiles=datafiles, 
+        sampling_rate=sampling_rate, 
+        max_clip_len=segment_seconds,
+    )
+
+    test_dataset = None
+    if 'test_datafiles' in configs['data']:
+        test_datafiles = configs['data']['test_datafiles']
+        if test_datafiles:
+            test_dataset = AudioTextDataset(
+                datafiles=test_datafiles, 
+                sampling_rate=sampling_rate, 
+                max_clip_len=segment_seconds,
+            )
+    
+    # data module
+    data_module = DataModule(
+        train_dataset=dataset,
+        num_workers=num_workers,
+        batch_size=batch_size,
+        test_dataset=test_dataset,
+    )
+
+    return data_module

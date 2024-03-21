@@ -9,7 +9,8 @@ class DataModule(pl.LightningDataModule):
         self,
         train_dataset: object,
         batch_size: int,
-        num_workers: int
+        num_workers: int,
+        test_dataset: object = None,
     ):
         r"""Data module. To get one batch of data:
 
@@ -29,6 +30,8 @@ class DataModule(pl.LightningDataModule):
         """
         super().__init__()
         self._train_dataset = train_dataset
+        self._test_dataset = test_dataset
+
         self.num_workers = num_workers
         self.batch_size = batch_size
         self.collate_fn = collate_fn
@@ -49,7 +52,8 @@ class DataModule(pl.LightningDataModule):
         # On multiple devices, each SegmentSampler samples a part of mini-batch
         # data.
         self.train_dataset = self._train_dataset
-        
+        self.test_dataset = self._test_dataset
+
         
     def train_dataloader(self) -> torch.utils.data.DataLoader:
         r"""Get train loader."""
@@ -70,10 +74,24 @@ class DataModule(pl.LightningDataModule):
         # return DataLoader(val_split)
         pass
 
-    def test_dataloader(self):
-        # test_split = Dataset(...)
-        # return DataLoader(test_split)
-        pass
+    def test_dataloader(self) -> torch.utils.data.DataLoader:
+        r"""Get test loader."""
+        
+        if self._test_dataset is None:
+            raise ValueError(
+                'Please provide a test dataset when initializing DataModule.')
+
+        test_loader = DataLoader(
+            dataset=self.test_dataset,
+            batch_size=self.batch_size,
+            collate_fn=self.collate_fn,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            persistent_workers=False,
+            shuffle=False
+        )
+
+        return test_loader
 
     def teardown(self):
         # clean up after fit or test

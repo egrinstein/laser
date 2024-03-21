@@ -87,15 +87,15 @@ Use chunk-based inference to save memory:
 
 To utilize your audio-text paired dataset:
 
-1. Format your dataset to match our JSON structure. Refer to the provided template at `datafiles/template.json`.
+1. Format your dataset to match our JSON structure. Refer to the provided template at `config/datafiles/template.json`.
 
 2. Update the `config/audiosep_base.yaml` file by listing your formatted JSON data files under `datafiles`. For example:
 
 ```yaml
 data:
     datafiles:
-        - 'datafiles/your_datafile_1.json'
-        - 'datafiles/your_datafile_2.json'
+        - 'config/datafiles/your_datafile_1.json'
+        - 'config/datafiles/your_datafile_2.json'
         ...
 ```
 
