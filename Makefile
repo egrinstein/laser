@@ -14,4 +14,4 @@ benchmark:
 	@python benchmark.py --checkpoint_path audiosep_base_4M_steps.ckpt
 
 eval:
-	@python evaluation/evaluate_audiotext_dataset.py
+	@python -m evaluation.evaluate_audiotext_dataset

@@ -173,3 +173,5 @@ separated_audio.wav
 workspace/
 evaluation/data
 config/datafiles/audioset_*
+*.e*
+*.o*

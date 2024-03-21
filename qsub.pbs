@@ -1,6 +1,6 @@
 #PBS -l walltime=24:00:00
       
-#PBS -l select=1:ncpus=10:mem=16gb:ngpus=1
+#PBS -l select=1:ncpus=10:mem=32gb:ngpus=1
 
 #PBS -N audiosep_commands
 
@@ -9,4 +9,4 @@ source activate audiosep
 
 cd $PBS_O_WORKDIR/
 
-make train
+make eval
