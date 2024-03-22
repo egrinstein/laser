@@ -17,5 +17,6 @@ dependencies:
       - pandas
       - webdataset
       - pyloudnorm
+      - audioset-download
   - torchaudio
   - torchvision
