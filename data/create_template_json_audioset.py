@@ -17,7 +17,7 @@ import argparse
 import random
 from tqdm import tqdm
 
-MIN_SIZE_IN_BYTES = 5000
+MIN_SIZE_IN_BYTES = 1000000
 
 
 def create_template_json_audioset(data_dir, output_json,
@@ -34,6 +34,7 @@ def create_template_json_audioset(data_dir, output_json,
             audio_file_path = os.path.join(label_dir, audio_file)
             if os.path.getsize(audio_file_path) < MIN_SIZE_IN_BYTES or not audio_file.endswith(".wav") :
                 os.remove(audio_file_path)
+                print(f"Removing small clip from {label}")
                 continue
             data.append({
                 "wav": audio_file_path,
