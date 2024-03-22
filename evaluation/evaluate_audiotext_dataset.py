@@ -60,6 +60,7 @@ class AudioTextDatasetEvaluator:
 
         sisdrs_dict = {}
         sdris_dict = {}
+        pums_dict = {}
         
         print(f'Evaluation on {self.dataset.datafiles} with [text label] queries.')
         device = pl_model.device
@@ -72,9 +73,9 @@ class AudioTextDatasetEvaluator:
 
             noise_track_idxs = self.waveform_mixer.get_noise_track_idxs(self.dataset, idx)
             mixture_texts = [self.dataset[i]['text'] for i in noise_track_idxs]
-            mixture = self.waveform_mixer.mix_waveforms(source, [
-                self.dataset[i]['waveform'] for i in noise_track_idxs]
-            )
+            interferers = [self.dataset[i]['waveform'] for i in noise_track_idxs]
+            mixture = self.waveform_mixer.mix_waveforms(source, interferers)
+
             sdr_no_sep = calculate_sdr(ref=source, est=mixture)
 
             conditions = pl_model.query_encoder(
@@ -97,8 +98,15 @@ class AudioTextDatasetEvaluator:
             sdri = sdr - sdr_no_sep
             sisdr = calculate_sisdr(ref=source, est=sep_segment)
 
+            pum = 1.
+            for interferer in interferers:
+                if calculate_sisdr(ref=interferer, est=sep_segment) > sisdr:
+                    pum = 0.
+                    break
+
             sisdrs_dict[class_id].append(sisdr)
             sdris_dict[class_id].append(sdri)
+            pums_dict[class_id].append(pum)
 
             # Update tqdm progress bar
             pbar.set_postfix(
@@ -106,23 +114,28 @@ class AudioTextDatasetEvaluator:
                     "class_id": class_id,
                     "SI-SDR": np.nanmedian(sisdrs_dict[class_id]),
                     "SDR": np.nanmedian(sdris_dict[class_id]),
+                    "PUM": np.nanmean(pums_dict[class_id]),
                 }
             )
 
         stats_dict = {
             "sisdrs_dict": sisdrs_dict,
             "sdris_dict": sdris_dict,
+            "pums_dict": pums_dict,
         }
 
         if average:
             median_sdris = {}
             median_sisdrs = {}
+            median_pums = {}
 
             for class_id in range(527):
                 median_sdris[class_id] = np.nanmedian(stats_dict["sdris_dict"][class_id])
                 median_sisdrs[class_id] = np.nanmedian(stats_dict["sisdrs_dict"][class_id])
+                median_pums[class_id] = np.nanmean(stats_dict["pums_dict"][class_id])
             stats_dict["sdris_dict"] = get_mean_from_dict_values(median_sdris)
             stats_dict["sisdrs_dict"] = get_mean_from_dict_values(median_sisdrs)
+            stats_dict["pums_dict"] = get_mean_from_dict_values(median_pums)
 
         return stats_dict
 
