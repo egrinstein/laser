@@ -1,8 +1,10 @@
 import random
+import torch
 import lightning.pytorch as pl
 import torch.nn as nn
 import torch.optim as optim
-from torchmetrics.functional.audio import signal_distortion_ratio
+from torchmetrics.functional.audio import signal_distortion_ratio, scale_invariant_signal_distortion_ratio
+from models.metrics import calculate_sdr, calculate_sisdr, calculate_pum
 
 from huggingface_hub import PyTorchModelHubMixin
 from torch.optim.lr_scheduler import LambdaLR
@@ -73,7 +75,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         batch_text = batch_audio_text_dict['text']
         batch_audio = batch_audio_text_dict['waveform']
         
-        mixtures, segments, mixture_texts = self.waveform_mixer(
+        mixtures, segments, interferers, *mixture_texts = self.waveform_mixer(
             waveforms=batch_audio, texts=batch_text
         )
 
@@ -121,7 +123,15 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
                 model_output = model_output.cpu()
                 segments = segments.cpu()
             sdr = signal_distortion_ratio(model_output, segments.squeeze(1))
-            log_dict[f"{prefix}_sdr"] = sdr.mean()
+            sisdr = scale_invariant_signal_distortion_ratio(model_output, segments.squeeze(1))
+            interferer_tensor = torch.stack(interferers, dim=1).squeeze(2)
+            model_output_tensor = model_output.unsqueeze(1).repeat(1, interferer_tensor.size(1), 1)
+            interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output_tensor, interferer_tensor)
+            pum = (interferer_sisdr > sisdr.unsqueeze(1)).any(dim=1).float()
+
+            log_dict[f"{prefix}_sdr"] = sdr #.mean()
+            log_dict[f"{prefix}_sisdr"] = sisdr #.mean()
+            log_dict[f"{prefix}_pum"] = pum #.mean()
 
         self.log_dict(log_dict, prog_bar=True)
         

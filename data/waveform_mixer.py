@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import pyloudnorm as pyln
+from typing import List
 
 
 class WaveformMixer(nn.Module):
@@ -39,6 +40,7 @@ class WaveformMixer(nn.Module):
 
             data_dict['segment'].append(segment)
             data_dict['mixture'].append(mixture)
+            data_dict['interferers'] = noise_waveforms
 
             if texts is not None:
                 mixed_texts.append(mixed_texts_n)
@@ -47,12 +49,12 @@ class WaveformMixer(nn.Module):
             data_dict[key] = torch.stack(data_dict[key], dim=0)
 
         # return data_dict
-        output = (data_dict['mixture'], data_dict['segment'])
+        output = (data_dict['mixture'], data_dict['segment'], data_dict['interferers'])
         if texts is not None:
             output += (mixed_texts,)
         return output
     
-    def get_noise_track_idxs(self, texts: list[str], n_target, mix_num: int):
+    def get_noise_track_idxs(self, texts: List[str], n_target, mix_num: int):
         """
         Get noise tracks to mix with the target track.
         This method guarantees that the noise tracks have different classes from the target track.
@@ -88,7 +90,7 @@ class WaveformMixer(nn.Module):
 
         return track_ids_to_add
 
-    def mix_waveforms(self, target_track: torch.Tensor, noise_waveforms: list[torch.Tensor]):
+    def mix_waveforms(self, target_track: torch.Tensor, noise_waveforms: List[torch.Tensor]):
 
         # create zero tensors as the background template
         noise = torch.zeros_like(target_track)
