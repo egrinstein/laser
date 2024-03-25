@@ -8,12 +8,15 @@ POSITIVE_QUERIES = [
     "Boost the {}",
     "Increase the {}",
     "Focus on the {}",
+    "Extract the {}",
 ]
 
 NEGATIVE_QUERIES = [
     "Remove the {}",
     "Filter out the {}",
     "Reduce the {}",
+    "Eliminate the interfering {}",
+    "Discard the {}",
 ]
 
 MIXED_QUERIES = []
