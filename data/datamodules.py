@@ -7,10 +7,10 @@ from torch.utils.data import DataLoader
 class DataModule(pl.LightningDataModule):
     def __init__(
         self,
-        train_dataset: object,
+        train_dataloader: object,
         batch_size: int,
         num_workers: int,
-        test_dataset: object = None,
+        test_dataloader: object = None,
     ):
         r"""Data module. To get one batch of data:
 
@@ -24,17 +24,16 @@ class DataModule(pl.LightningDataModule):
 
         Args:
             train_sampler: Sampler object
-            train_dataset: Dataset object
+            train_dataloader: torch.utils.data.DataLoader object
             num_workers: int
             distributed: bool
         """
         super().__init__()
-        self._train_dataset = train_dataset
-        self._test_dataset = test_dataset
+        self._train_dataloader = train_dataloader
+        self._test_dataloader = test_dataloader
 
         self.num_workers = num_workers
         self.batch_size = batch_size
-        self.collate_fn = collate_fn
 
 
     def prepare_data(self):
@@ -51,23 +50,14 @@ class DataModule(pl.LightningDataModule):
         # SegmentSampler is used for selecting segments for training.
         # On multiple devices, each SegmentSampler samples a part of mini-batch
         # data.
-        self.train_dataset = self._train_dataset
-        self.test_dataset = self._test_dataset
+        # self.train_dataloader = self._train_dataloader
+        # self.test_dataloader = self._test_dataloader
 
-        
+
     def train_dataloader(self) -> torch.utils.data.DataLoader:
         r"""Get train loader."""
-        train_loader = DataLoader(
-            dataset=self.train_dataset,
-            batch_size=self.batch_size,
-            collate_fn=self.collate_fn,
-            num_workers=self.num_workers,
-            pin_memory=True,
-            persistent_workers=False,
-            shuffle=True
-        )
-
-        return train_loader
+        
+        return self._train_dataloader
 
     def val_dataloader(self):
         # val_split = Dataset(...)
@@ -77,64 +67,9 @@ class DataModule(pl.LightningDataModule):
     def test_dataloader(self) -> torch.utils.data.DataLoader:
         r"""Get test loader."""
         
-        if self._test_dataset is None:
-            raise ValueError(
-                'Please provide a test dataset when initializing DataModule.')
-
-        test_loader = DataLoader(
-            dataset=self.test_dataset,
-            batch_size=self.batch_size,
-            collate_fn=self.collate_fn,
-            num_workers=self.num_workers,
-            pin_memory=True,
-            persistent_workers=False,
-            shuffle=False
-        )
-
-        return test_loader
+        return self._test_dataloader
 
     def teardown(self):
         # clean up after fit or test
         # called on every process in DDP
         pass
-
-
-def collate_fn(list_data_dict):
-    r"""Collate mini-batch data to inputs and targets for training.
-
-    Args:
-        list_data_dict: e.g., [
-            {
-                'text': 'a sound of dog',
-                'waveform': (1, samples),
-                'modality': 'audio_text'
-            }
-            ...
-            ]
-    Returns:
-        data_dict: e.g. 
-            'audio_text': {
-                'text': ['a sound of dog', ...]
-                'waveform': (batch_size, 1, samples)
-        }
-    """
-    
-    at_list_data_dict = [
-        data_dict for data_dict in list_data_dict if data_dict['modality'] == 'audio_text']
-
-    at_data_dict = {}
-    
-    if len(at_list_data_dict) > 0:
-        for key in at_list_data_dict[0].keys():
-            at_data_dict[key] = [at_data_dict[key] for at_data_dict in at_list_data_dict]
-            if key == 'waveform':
-                at_data_dict[key] = torch.stack(at_data_dict[key])
-            elif key == 'text':
-                at_data_dict[key] = [text for text in at_data_dict[key]]
-
-    
-    data_dict = {
-        'audio_text': at_data_dict
-    }
-    
-    return data_dict

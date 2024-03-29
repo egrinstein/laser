@@ -11,7 +11,7 @@ import yaml
 from losses import get_loss_function
 from models.clap_encoder import CLAP_Encoder
 from models.audiosep import AudioSep, get_model_class
-from data.audiotext_dataset import AudioTextDataset
+from data.audiotext_dataset import AudioTextDataLoader
 from data.datamodules import DataModule
 
 
@@ -245,28 +245,31 @@ def get_data_module(
     datafiles = configs['data']['train_datafiles']
     
     # dataset
-    dataset = AudioTextDataset(
+    dataloader = AudioTextDataLoader(
         datafiles=datafiles, 
         sampling_rate=sampling_rate, 
         max_clip_len=segment_seconds,
+        batch_size=batch_size,
     )
 
-    test_dataset = None
+    test_dataloader = None
     if 'test_datafiles' in configs['data']:
         test_datafiles = configs['data']['test_datafiles']
         if test_datafiles:
-            test_dataset = AudioTextDataset(
+            test_dataloader = AudioTextDataLoader(
                 datafiles=test_datafiles, 
                 sampling_rate=sampling_rate, 
                 max_clip_len=segment_seconds,
+                batch_size=batch_size,
+                shuffle=False,
             )
     
     # data module
     data_module = DataModule(
-        train_dataset=dataset,
+        train_dataloader=dataloader,
         num_workers=num_workers,
         batch_size=batch_size,
-        test_dataset=test_dataset,
+        test_dataloader=test_dataloader,
     )
 
     return data_module

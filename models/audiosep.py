@@ -4,7 +4,6 @@ import lightning.pytorch as pl
 import torch.nn as nn
 import torch.optim as optim
 from torchmetrics.functional.audio import signal_distortion_ratio, scale_invariant_signal_distortion_ratio
-from models.metrics import calculate_sdr, calculate_sisdr, calculate_pum
 
 from huggingface_hub import PyTorchModelHubMixin
 from torch.optim.lr_scheduler import LambdaLR
@@ -51,39 +50,37 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     def forward(self, x):
         pass
 
-    def _step(self, batch_data_dict, batch_idx, compute_sdr=True, sdr_freq=1, prefix='train'):
+    def _step(self, batch_audio_text_dict, batch_idx, compute_sdr=True, sdr_freq=1, prefix='train'):
         r"""Forward a mini-batch data to model, calculate loss function, and
         train for one step. A mini-batch data is evenly distributed to multiple
         devices (if there are) for parallel training.
 
         Args:
-            batch_data_dict: e.g. 
-                'audio_text': {
+            batch_audio_text_dict: e.g. 
+            {
                     'text': ['a sound of dog', ...]
                     'waveform': (batch_size, 1, samples)
             }
-            batch_idx: int
-
+            
         Returns:
             loss: float, loss function of this mini-batch
         """
         # [important] fix random seeds across devices
         random.seed(batch_idx)
 
-        batch_audio_text_dict = batch_data_dict['audio_text']
-
         batch_text = batch_audio_text_dict['text']
         batch_audio = batch_audio_text_dict['waveform']
         
-        mixtures, segments, interferers, *mixture_texts = self.waveform_mixer(
+        mixtures, segments, interferers, mixture_texts = self.waveform_mixer(
             waveforms=batch_audio, texts=batch_text
         )
 
         # augment text data (convert caption such as "sound of dog" to "enhance sound of dog")
         if self.query_augmentation:
+            z = list(zip(batch_text, mixture_texts))
             batch_text = [
                 caption_to_random_command(t, mt)
-                for t, mt in zip(batch_text, mixture_texts)
+                for t, mt in z
             ]
 
         # calculate text embed for audio-text data
@@ -117,21 +114,28 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         log_dict = {f"{prefix}_loss": loss}
         
-        if compute_sdr and batch_idx % sdr_freq == 0: # Modify this to control the frequency of metrics computation
+        if compute_sdr and batch_idx % sdr_freq == 0: # Modify this to control the frequency of metrics computation            
+            if interferers.shape[1] != 1:
+                raise ValueError("Only a single interferer is currently supported.")
+            else:
+                interferers = interferers[:, 0]
+
             if model_output.device.type == "mps":
                 # SDR calculation is not supported on mps
                 model_output = model_output.cpu()
                 segments = segments.cpu()
+                interferers = interferers.cpu()
+
             sdr = signal_distortion_ratio(model_output, segments.squeeze(1))
             sisdr = scale_invariant_signal_distortion_ratio(model_output, segments.squeeze(1))
-            interferer_tensor = torch.stack(interferers, dim=1).squeeze(2)
-            model_output_tensor = model_output.unsqueeze(1).repeat(1, interferer_tensor.size(1), 1)
-            interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output_tensor, interferer_tensor)
+
+            model_output_tensor = model_output.unsqueeze(1).repeat(1, interferers.size(1), 1)
+            interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output_tensor, interferers)
             pum = (interferer_sisdr > sisdr.unsqueeze(1)).any(dim=1).float()
 
-            log_dict[f"{prefix}_sdr"] = sdr #.mean()
-            log_dict[f"{prefix}_sisdr"] = sisdr #.mean()
-            log_dict[f"{prefix}_pum"] = pum #.mean()
+            log_dict[f"{prefix}_sdr"] = sdr.mean()
+            log_dict[f"{prefix}_sisdr"] = sisdr.mean()
+            log_dict[f"{prefix}_pum"] = pum.mean()
 
         self.log_dict(log_dict, prog_bar=True)
         

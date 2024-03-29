@@ -3,6 +3,9 @@
 download-audioset:
 	@python data/download_audioset.py
 
+download-audiocaps:
+	@python data/download_audiocaps.py
+
 dataset-json:
 	@python data/create_template_json_audioset.py --data_dir ~/datasets/audioset/wavs --output_json config/datafiles/audioset.json
 

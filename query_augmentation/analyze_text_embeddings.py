@@ -38,6 +38,21 @@ EXAMPLE_QUERIES = [
 ]
 
 
+class ClapDistance:
+    def __init__(self) -> None:
+        self.clap_encoder = CLAP_Encoder().eval()
+        
+    def __call__(self, query1, query2):
+        query_embeddings = self.clap_encoder(
+            modality="text", text=[query1, query2],
+        )
+        distance = torch.nn.functional.cosine_similarity(
+            query_embeddings[0].unsqueeze(0),
+            query_embeddings[1].unsqueeze(0)
+        )
+        return distance.item()
+
+
 def main(queries):
     # 1. Load the model
     print("Loading the query encoder (CLAP)...")

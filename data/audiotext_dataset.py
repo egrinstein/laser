@@ -2,7 +2,8 @@ import json
 import random
 import torch
 import torchaudio
-from torch.utils.data import Dataset
+
+from torch.utils.data import Dataset, DataLoader
 
 
 class AudioTextDataset(Dataset):
@@ -89,3 +90,54 @@ class AudioTextDataset(Dataset):
         }
 
         return data_dict
+
+
+def collate_fn(list_data_dict):
+    r"""Collate mini-batch data to inputs and targets for training.
+
+    Args:
+        list_data_dict: e.g., [
+            {
+                'text': 'a sound of dog',
+                'waveform': (1, samples),
+                'modality': 'audio_text'
+            }
+            ...
+            ]
+    Returns:
+        data_dict: e.g. 
+            'audio_text': {
+                'text': ['a sound of dog', ...]
+                'waveform': (batch_size, 1, samples)
+        }
+    """
+    
+    at_list_data_dict = [
+        data_dict for data_dict in list_data_dict if data_dict['modality'] == 'audio_text']
+
+    at_data_dict = {}
+    
+    if len(at_list_data_dict) > 0:
+        for key in at_list_data_dict[0].keys():
+            at_data_dict[key] = [at_data_dict[key] for at_data_dict in at_list_data_dict]
+            if key == 'waveform':
+                at_data_dict[key] = torch.stack(at_data_dict[key])
+            elif key == 'text':
+                at_data_dict[key] = [text for text in at_data_dict[key]]
+
+    
+    return at_data_dict
+
+
+class AudioTextDataLoader(DataLoader):
+    def __init__(self, datafiles=[''], 
+        sampling_rate=32000, 
+        max_clip_len=5, *args, **kwargs):
+        
+        self._dataset = AudioTextDataset(
+            datafiles=datafiles, 
+            sampling_rate=sampling_rate, 
+            max_clip_len=max_clip_len
+        )
+
+        super().__init__(self._dataset, collate_fn=collate_fn, *args, **kwargs)

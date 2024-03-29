@@ -17,20 +17,20 @@ class WaveformMixer(nn.Module):
         }
 
     def __call__(self, waveforms, texts=None):
-        
         batch_size = waveforms.shape[0]
 
         data_dict = {
             'segment': [],
             'mixture': [],
+            'interferers': [],
         }
 
         mixed_texts = []
+
         for n in range(0, batch_size):
             segment = waveforms[n].clone()
 
             mix_num = random.randint(2, self.max_mix_num)
-            assert mix_num >= 2
 
             noise_track_idxs = self.get_noise_track_idxs(texts, n, mix_num)
             noise_waveforms = [waveforms[i] for i in noise_track_idxs]
@@ -40,8 +40,7 @@ class WaveformMixer(nn.Module):
 
             data_dict['segment'].append(segment)
             data_dict['mixture'].append(mixture)
-            data_dict['interferers'] = noise_waveforms
-
+            data_dict['interferers'].append(torch.stack(noise_waveforms))
             if texts is not None:
                 mixed_texts.append(mixed_texts_n)
 
