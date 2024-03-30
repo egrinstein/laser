@@ -21,7 +21,7 @@ def main():
 
     print("2. Downloading the audio files")
 
-    d = Downloader(root_path='/Users/ezajlerg/datasets/audiocaps/', n_jobs=1)
+    d = Downloader(root_path='/rds/general/user/ezajlerg/home/datasets/audiocaps/', n_jobs=5)
     d.download(format = 'wav') # it will cross-check the files with the csv files in the original repository
 
 

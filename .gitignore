@@ -175,5 +175,9 @@ evaluation/data
 config/datafiles/audioset_*
 *.e*
 *.o*
+<<<<<<< HEAD
 
 *.csv
+=======
+config/datafiles/csvs/
+>>>>>>> main
