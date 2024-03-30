@@ -175,3 +175,4 @@ evaluation/data
 config/datafiles/audioset_*
 *.e*
 *.o*
+config/datafiles/csvs/

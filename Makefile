@@ -3,8 +3,11 @@
 download-audioset:
 	@python data/download_audioset.py
 
-dataset-json:
+create-audioset-json:
 	@python data/create_template_json_audioset.py --data_dir ~/datasets/audioset/wavs --output_json config/datafiles/audioset.json
+
+create-audiocaps-json:
+	@python data/create_template_json_audiocaps.py --wav_dir ~/datasets/audiocaps/ --csv_dir config/datafiles/csvs/ --output_json config/datafiles/
 
 train:
 	@PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
