@@ -5,6 +5,10 @@ import torchaudio
 
 from torch.utils.data import Dataset, DataLoader
 
+from commander import random_template_command
+from data.mixing.waveform_mixer import WaveformMixer
+from models.clap_encoder import CLAP_Encoder
+
 
 class AudioTextDataset(Dataset):
     """Can sample data from audio-text databases
@@ -14,7 +18,7 @@ class AudioTextDataset(Dataset):
     """
     def __init__(
         self,
-        datafiles, 
+        datafiles=[''], 
         sampling_rate=32000, 
         max_clip_len=5,
     ):
@@ -32,8 +36,6 @@ class AudioTextDataset(Dataset):
         return len(self.all_data_json)
 
     def _cut_or_randomcrop(self, waveform):
-        # TODO: remove this funcion, which is now duplicated in data/mixing/waveform_mixer.py
-        
         # waveform: [1, samples]
         # random crop
         if waveform.size(1) > self.max_length:
@@ -94,47 +96,15 @@ class AudioTextDataset(Dataset):
         return data_dict
 
 
-def collate_fn(list_data_dict):
-    r"""Collate mini-batch data to inputs and targets for training.
-
-    Args:
-        list_data_dict: e.g., [
-            {
-                'text': 'a sound of dog',
-                'waveform': (1, samples),
-                'modality': 'audio_text'
-            }
-            ...
-            ]
-    Returns:
-        data_dict: e.g. 
-            'audio_text': {
-                'text': ['a sound of dog', ...]
-                'waveform': (batch_size, 1, samples)
-        }
-    """
-    
-    at_list_data_dict = [
-        data_dict for data_dict in list_data_dict if data_dict['modality'] == 'audio_text']
-
-    at_data_dict = {}
-    
-    if len(at_list_data_dict) > 0:
-        for key in at_list_data_dict[0].keys():
-            at_data_dict[key] = [at_data_dict[key] for at_data_dict in at_list_data_dict]
-            if key == 'waveform':
-                at_data_dict[key] = torch.stack(at_data_dict[key])
-            elif key == 'text':
-                at_data_dict[key] = [text for text in at_data_dict[key]]
-
-    
-    return at_data_dict
-
-
 class AudioTextDataLoader(DataLoader):
-    def __init__(self, datafiles, 
+    def __init__(self, datafiles=[''], 
         sampling_rate=32000, 
-        max_clip_len=5, *args, **kwargs):
+        max_clip_len=5, 
+        max_mix_num=2,
+        lower_db=-40,
+        higher_db=0,
+        query_augmentation=True,
+        device=None, *args, **kwargs):
         
         self._dataset = AudioTextDataset(
             datafiles=datafiles, 
@@ -142,4 +112,104 @@ class AudioTextDataLoader(DataLoader):
             max_clip_len=max_clip_len
         )
 
-        super().__init__(self._dataset, collate_fn=collate_fn, *args, **kwargs)
+        self.waveform_mixer = WaveformMixer(
+            max_mix_num=max_mix_num,
+            lower_db=lower_db, 
+            higher_db=higher_db
+        )
+
+        self.query_encoder = CLAP_Encoder().eval().to(device)
+
+
+        self.device = device
+        if device is None:
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        self.query_augmentation = query_augmentation
+        super().__init__(self._dataset, collate_fn=self.collate_fn, *args, **kwargs)
+
+
+    def collate_fn(self, list_data_dict):
+        r"""Collate mini-batch data to inputs and targets for training.
+
+        Args:
+            list_data_dict: e.g., [
+                {
+                    'text': 'a sound of dog',
+                    'waveform': (1, samples),
+                    'modality': 'audio_text'
+                }
+                ...
+                ]
+        Returns:
+            data_dict: e.g. 
+                'audio_text': {
+                    'text': ['a sound of dog', ...]
+                    'waveform': (batch_size, 1, samples)
+            }
+        """
+        
+        at_list_data_dict = [
+            data_dict for data_dict in list_data_dict if data_dict['modality'] == 'audio_text']
+
+        at_data_dict = {}
+        
+        if len(at_list_data_dict) > 0:
+            for key in at_list_data_dict[0].keys():
+                at_data_dict[key] = [at_data_dict[key] for at_data_dict in at_list_data_dict]
+                if key == 'waveform':
+                    at_data_dict[key] = torch.stack(at_data_dict[key])
+                elif key == 'text':
+                    at_data_dict[key] = [text for text in at_data_dict[key]]
+        
+        # Move data to device (gpu/mps/cpu)
+        at_data_dict = _dict_to_device(at_data_dict, self.device)
+        
+        mixtures, segments, interferers, mixture_texts = self.waveform_mixer(
+            waveforms=at_data_dict['waveform'], texts=at_data_dict['text']
+        )
+
+        # augment text data (convert caption such as "sound of dog" to "enhance sound of dog")
+        if self.query_augmentation:
+            z = list(zip(at_data_dict['text'], mixture_texts))
+            batch_text = [
+                random_template_command(t, mt)
+                for t, mt in z
+            ]
+
+        # calculate text embed for audio-text data
+        conditions = self.query_encoder(
+            modality='text',
+            text=batch_text,
+            audio=segments.squeeze(1),
+        )
+
+        return {
+            'input': {
+                'mixture': mixtures[:, None, :].squeeze(1),
+                'condition': conditions,
+                'interferers': interferers,
+                'segments': segments
+            },
+            'target': {
+                'segment': segments.squeeze(1),
+            }
+        }
+    
+
+def _dict_to_device(data_dict, device):
+    r"""Move data_dict to device.
+    """
+    
+    for key, value in data_dict.items():
+        if isinstance(value, torch.Tensor):
+            data_dict[key] = value.to(device)
+        elif isinstance(value, list):
+            if isinstance(value[0], torch.Tensor):
+                data_dict[key] = [v.to(device) for v in value]
+            else:
+                data_dict[key] = value
+        else:
+            data_dict[key] = value
+    
+    return data_dict

@@ -29,7 +29,7 @@ The mixture files are created by mixing the audio files from the AudioCaps datas
 python -m data.mixing.audiocaps_csv_mixer --in_csv_dir config/datafiles/csvs --out_csv_dir config/datafiles/csvs
 ```
 
-2.2 Create the mixture .wav files
+2.2 Create the mixture .wav files and the base template .json files
 ```bash
 python -m data.mixing.mix_audiocaps --in_csv_dir config/datafiles/csvs/ --out_json_dir config/datafiles/ --in_wav_dir ~/datasets/audiocaps/ --out_wav_dir ~/datasets/audiocaps/mix
 ```
@@ -39,9 +39,9 @@ python -m data.mixing.mix_audiocaps --in_csv_dir config/datafiles/csvs/ --out_js
 @python -m data.mixing.create_audiocaps_commands --in_csv_dir config/datafiles/csvs --out_dir ~/datasets/audiocaps/embeddings
 ```
 
-2.4 Create the .json file which is loaded by the dataloader
+2.4 Add the embeddings to the mixture json files
 ```bash
-@python data/json/create_template_json_audiocaps.py --wav_dir ~/datasets/audiocaps/ --csv_dir config/datafiles/csvs/ --output_json config/datafiles/
+@python data/json/add_embeddings_to_audiocaps_json.py --json_dir config/datafiles/ --embed_dir ~/datasets/audiocaps/embeddings
 ```
 
 

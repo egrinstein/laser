@@ -3,13 +3,11 @@ import json
 import logging
 from typing import Dict
 import numpy as np
-from data.mixing.waveform_mixer import WaveformMixer
 import torch
 import torch.nn as nn
 import yaml
 
 from models.metrics import get_loss_function
-from models.clap_encoder import CLAP_Encoder
 from models.sepcommander import AudioSep, get_model_class
 from data.audiotext_dataset import AudioTextDataLoader
 from data.datamodules import DataModule
@@ -170,21 +168,11 @@ def load_ss_model(
         condition_size=condition_size,
     )
 
-    query_encoder = CLAP_Encoder().eval()
-
-    waveform_mixer = WaveformMixer(
-        max_mix_num = configs['data']['max_mix_num'],
-        lower_db = configs['data']['loudness_norm']['lower_db'],
-        higher_db = configs['data']['loudness_norm']['higher_db']
-    )
-
     # Load PyTorch Lightning model
     pl_model = AudioSep.load_from_checkpoint(
         checkpoint_path=checkpoint_path,
         strict=False,
         ss_model=ss_model,
-        waveform_mixer=waveform_mixer,
-        query_encoder=query_encoder,
         loss_function=get_loss_function(configs['train']['loss_type']),
         optimizer_type=None,
         learning_rate=None,
@@ -239,17 +227,20 @@ def get_data_module(
     segment_seconds = configs['data']['segment_seconds']
     batch_size = configs['train']['batch_size_per_device']
     num_workers = configs['train']['num_workers']
-    
+    device = configs['accelerator']
+
     # audio-text datasets
     datafiles = configs['data']['train_datafiles']
     print(f"train_datafiles: {datafiles}")
     
     # dataset
-    dataloader = AudioTextDataLoader(
+    train_dataloader = AudioTextDataLoader(
         datafiles=datafiles, 
         sampling_rate=sampling_rate, 
         max_clip_len=segment_seconds,
         batch_size=batch_size,
+        shuffle=True,
+        device=device,
     )
 
     test_dataloader = None
@@ -263,6 +254,7 @@ def get_data_module(
                 max_clip_len=segment_seconds,
                 batch_size=batch_size,
                 shuffle=False,
+                device=device,
             )
 
     val_dataloader = None
@@ -276,11 +268,12 @@ def get_data_module(
                 max_clip_len=segment_seconds,
                 batch_size=batch_size,
                 shuffle=False,
+                device=device,
             )
     
     # data module
     data_module = DataModule(
-        train_dataloader=dataloader,
+        train_dataloader=train_dataloader,
         num_workers=num_workers,
         batch_size=batch_size,
         val_dataloader=val_dataloader,

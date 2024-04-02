@@ -1,14 +1,9 @@
 import json
 import os
-import random
-import torch
 import torchaudio
 
 from torch.utils.data import Dataset, DataLoader
 from safetensors.torch import load_file
-
-from commander import CommandCreator
-from models.clap_encoder import CLAP_Encoder
 
 
 class AudioTextMixDataset(Dataset):

@@ -1,5 +1,4 @@
 import random
-import torch
 import lightning.pytorch as pl
 import torch.nn as nn
 import torch.optim as optim
@@ -8,14 +7,12 @@ from torchmetrics.functional.audio import signal_distortion_ratio, scale_invaria
 from huggingface_hub import PyTorchModelHubMixin
 from torch.optim.lr_scheduler import LambdaLR
 
-from commander import random_template_command
+# from commander import random_template_command
 
 
 class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     def __init__(
         self,
-        query_encoder: nn.Module,
-        waveform_mixer: nn.Module,
         ss_model: nn.Module = None,
         loss_function = None,
         optimizer_type: str = None,
@@ -37,8 +34,6 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         super().__init__()
         self.ss_model = ss_model
-        self.waveform_mixer = waveform_mixer
-        self.query_encoder = query_encoder
         self.use_text_ratio = use_text_ratio
         self.loss_function = loss_function
         self.optimizer_type = optimizer_type
@@ -57,56 +52,29 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         Args:
             batch_audio_text_dict: e.g. 
             {
-                    'text': ['a sound of dog', ...]
-                    'waveform': (batch_size, 1, samples)
+                    'input': { 'mixture': torch.Tensor,
+                               'condition': torch.Tensor,
+                               'interferers': torch.Tensor,
+                               'segments': torch.Tensor}
+                    'target': torch.Tensor
             }
             
         Returns:
             loss: float, loss function of this mini-batch
         """
-        # [important] fix random seeds across devices
+        # Fix random seeds across devices
         random.seed(batch_idx)
 
-        batch_text = batch_audio_text_dict['text']
-        batch_audio = batch_audio_text_dict['waveform']
-        
-        mixtures, segments, interferers, mixture_texts = self.waveform_mixer(
-            waveforms=batch_audio, texts=batch_text
-        )
+        input_dict = batch_audio_text_dict['input']
+        target_dict = batch_audio_text_dict['target']
 
-        # augment text data (convert caption such as "sound of dog" to "enhance sound of dog")
-        if self.query_augmentation:
-            z = list(zip(batch_text, mixture_texts))
-            batch_text = [
-                random_template_command(t, mt)
-                for t, mt in z
-            ]
-
-        # calculate text embed for audio-text data
-        conditions = self.query_encoder(
-            modality='text',
-            text=batch_text,
-            audio=segments.squeeze(1),
-            use_text_ratio=self.use_text_ratio,
-        )
-
-        input_dict = {
-            'mixture': mixtures[:, None, :].squeeze(1),
-            'condition': conditions,
-        }
-
-        target_dict = {
-            'segment': segments.squeeze(1),
-        }
-
-        self.ss_model.train()
+        if prefix == 'train':
+            self.ss_model.train()
         model_output = self.ss_model(input_dict)['waveform']
         model_output = model_output.squeeze()
         # (batch_size, 1, segment_samples)
 
-        output_dict = {
-            'segment': model_output,
-        }
+        output_dict = {'segment': model_output}
 
         # Calculate loss
         loss = self.loss_function(output_dict, target_dict)
@@ -114,6 +82,8 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         log_dict = {f"{prefix}_loss": loss}
         
         if compute_sdr and batch_idx % sdr_freq == 0: # Modify this to control the frequency of metrics computation            
+            interferers = input_dict['interferers']
+            segments = input_dict['segments']
             if interferers.shape[1] != 1:
                 raise ValueError("Only a single interferer is currently supported.")
             else:

@@ -9,9 +9,6 @@ from torch.utils.tensorboard import SummaryWriter
 from models.resunet import *
 from models.metrics import get_loss_function
 from models.sepcommander import AudioSep, get_model_class
-from data.mixing.waveform_mixer import WaveformMixer
-from models.clap_encoder import CLAP_Encoder
-from models.tinyclip_encoder import TinyCLIP_Encoder
 from callbacks.base import CheckpointEveryNSteps
 from models.lr_schedulers import get_lr_lambda
 
@@ -100,6 +97,7 @@ def train(args) -> NoReturn:
     filename = args.filename
 
     devices_num = torch.cuda.device_count()
+
     # Read config file.
     configs = parse_yaml(config_yaml)
 
@@ -150,19 +148,6 @@ def train(args) -> NoReturn:
         condition_size=condition_size,
     )
 
-    waveform_mixer = WaveformMixer(
-        max_mix_num=max_mix_num,
-        lower_db=lower_db, 
-        higher_db=higher_db
-    )
-
-    if query_net == 'CLAP':
-        query_encoder = CLAP_Encoder()
-    elif query_net == 'TinyCLIP':
-        query_encoder = TinyCLIP_Encoder()
-    else:
-        raise NotImplementedError
-
     lr_lambda_func = get_lr_lambda(
         lr_lambda_type=lr_lambda_type,
         warm_up_steps=warm_up_steps,
@@ -171,8 +156,6 @@ def train(args) -> NoReturn:
 
     # pytorch-lightning model
     pl_model = AudioSep(
-        query_encoder=query_encoder,
-        waveform_mixer=waveform_mixer,
         ss_model=ss_model,
         loss_function=get_loss_function(
             configs['train']['loss_type']),
