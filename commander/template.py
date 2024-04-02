@@ -81,7 +81,7 @@ def random_template_command(caption: str, interferer_captions: list[str], return
     # We can split these and choose one randomly.
         
     def _parse_text(text: str):
-        return random.choice(text.split(",")).lower().strip()
+        return text.lower()
     
     caption = _parse_text(caption)
     if interferer_captions is not None:

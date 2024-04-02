@@ -51,7 +51,9 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json):
             "caption_mixture": command,
             "caption_target": row["caption_target"],
             "caption_interferer": row["caption_interferer"],
-            "caption_type": command_type
+            "caption_type": command_type,
+            "wav_target": path_target,
+            "wav_interferer": path_interferer,
         }
         data.append(data_dict)
 

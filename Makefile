@@ -3,11 +3,6 @@
 download:
 	@python data/downloaders/audiocaps.py --out_dir ~/datasets/audiocaps --csv_dir config/datafiles/csvs
 
-unmixed-jsons:
-	@python data/create_template_json_audiocaps.py --wav_dir ~/datasets/audiocaps/ --csv_dir config/datafiles/csvs/ --output_json config/datafiles/
-
-jsons:
-	@python data/add_embeddings_to_audiocaps_json.py --embed_dir ~/datasets/audiocaps/embeddings --json_dir config/datafiles/
 
 csv:
 	@python -m data.mixing.audiocaps_csv_mixer --in_csv_dir config/datafiles/csvs --out_csv_dir config/datafiles/csvs
@@ -17,6 +12,9 @@ mix:
 
 embeddings:
 	@python -m data.mixing.create_audiocaps_commands --in_csv_dir config/datafiles/csvs --out_dir ~/datasets/audiocaps/embeddings
+
+add-embeddings-to-json:
+	@python data/add_embeddings_to_audiocaps_json.py --embed_dir ~/datasets/audiocaps/embeddings --json_dir config/datafiles/
 
 train:
 	@PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0

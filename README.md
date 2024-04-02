@@ -44,6 +44,5 @@ python -m data.mixing.mix_audiocaps --in_csv_dir config/datafiles/csvs/ --out_js
 @python data/json/add_embeddings_to_audiocaps_json.py --json_dir config/datafiles/ --embed_dir ~/datasets/audiocaps/embeddings
 ```
 
-
-### Training
+## Training
 python train.py --workspace workspace/ --config_yaml config/audiosep_base.yaml --resume_checkpoint_path checkpoint/audiosep_base_4M_steps.ckpt

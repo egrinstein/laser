@@ -3,11 +3,11 @@ task_name: AudioSep
 
 data:
     train_datafiles:
-        - 'config/datafiles/audiocaps_train.json'
+        - 'config/datafiles/audiocaps_train_mix.json'
     val_datafiles:
-        - 'config/datafiles/audiocaps_val.json'
+        - 'config/datafiles/audiocaps_val_mix.json'
     test_datafiles:
-        - 'config/datafiles/audiocaps_test.json'
+        - 'config/datafiles/audiocaps_test_mix.json'
 
     sampling_rate: 32000
     segment_seconds: 5

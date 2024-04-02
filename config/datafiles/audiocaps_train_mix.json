@@ -1,86 +1,104 @@
 {
-    "data": {
-        "data": [
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/49922_43693.wav",
-                "caption_mixture": "A clip playing an audio of splashing water and a revving small engine as ducks quack in the distance",
-                "caption_target": "Splashing water and a revving small engine as ducks quack in the distance",
-                "caption_interferer": "A man speaks with some scraping footsteps and distant traffic passing",
-                "caption_type": "descriptive",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/49922_43693.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/43693_69467.wav",
-                "caption_mixture": "Focus on the a man speaks with some scraping footsteps and distant traffic passing, eliminate the interfering and chickens cackle in the background",
-                "caption_target": "A man speaks with some scraping footsteps and distant traffic passing",
-                "caption_interferer": "An adult male speaks briefly, animals bleat, and chickens cackle in the background, and an animal bleats once in the foreground followed by four quiet metal taps",
-                "caption_type": "mixed",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/43693_69467.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/92765_47298.wav",
-                "caption_mixture": "An excerpt of music plays",
-                "caption_target": "A person sighs, music plays, and then something explodes",
-                "caption_interferer": "A man speaking on a microphone",
-                "caption_type": "descriptive",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/92765_47298.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/8636_23531.wav",
-                "caption_mixture": "This is an audio of a goat making noises and a person talking",
-                "caption_target": "A goat making noises and a person talking",
-                "caption_interferer": "A person whistling a tune",
-                "caption_type": "descriptive",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/8636_23531.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/80225_72419.wav",
-                "caption_mixture": "Increase the an engine revs as tires squeal and slide on something slippery",
-                "caption_target": "An engine revs as tires squeal and slide on something slippery",
-                "caption_interferer": "Some metal objects are hit while a woman talks",
-                "caption_type": "positive",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/80225_72419.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/480_66936.wav",
-                "caption_mixture": "A clip of muffled sounds of horse riding",
-                "caption_target": "Muffled sounds of horse riding",
-                "caption_interferer": "A man speaks followed by barking of a dog and some light rustling",
-                "caption_type": "descriptive",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/480_66936.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/6753_99902.wav",
-                "caption_mixture": "Eliminate the interfering water trickling and birds chirping",
-                "caption_target": "Engine revving a running with crackling",
-                "caption_interferer": "Water trickling and birds chirping",
-                "caption_type": "negative",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/6753_99902.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/97967_99902.wav",
-                "caption_mixture": "An excerpt of low hums and sputters of an engine idling",
-                "caption_target": "Low hums and sputters of an engine idling",
-                "caption_interferer": "Water trickling and birds chirping",
-                "caption_type": "descriptive",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/97967_99902.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/99902_43693.wav",
-                "caption_mixture": "Remove the a man speaks with some scraping footsteps and distant traffic passing",
-                "caption_target": "Water trickling and birds chirping",
-                "caption_interferer": "A man speaks with some scraping footsteps and distant traffic passing",
-                "caption_type": "negative",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/99902_43693.safetensors"
-            },
-            {
-                "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/101791_43693.wav",
-                "caption_mixture": "Amplify the birds chirping in the distance with wind blowing and discard the a man speaks with some scraping footsteps and distant traffic passing",
-                "caption_target": "Birds chirping in the distance with wind blowing",
-                "caption_interferer": "A man speaks with some scraping footsteps and distant traffic passing",
-                "caption_type": "mixed",
-                "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/101791_43693.safetensors"
-            }
-        ]
-    }
+    "data": [
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/49922_43693.wav",
+            "caption_mixture": "Eliminate the interfering a man speaks with some scraping footsteps and distant traffic passing",
+            "caption_target": "Splashing water and a revving small engine as ducks quack in the distance",
+            "caption_interferer": "A man speaks with some scraping footsteps and distant traffic passing",
+            "caption_type": "negative",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/49922.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/43693.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/49922_43693.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/43693_69467.wav",
+            "caption_mixture": "Enhance the a man speaks with some scraping footsteps and distant traffic passing",
+            "caption_target": "A man speaks with some scraping footsteps and distant traffic passing",
+            "caption_interferer": "An adult male speaks briefly, animals bleat, and chickens cackle in the background, and an animal bleats once in the foreground followed by four quiet metal taps",
+            "caption_type": "positive",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/43693.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/69467.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/43693_69467.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/92765_47298.wav",
+            "caption_mixture": "Amplify the a person sighs, music plays, and then something explodes",
+            "caption_target": "A person sighs, music plays, and then something explodes",
+            "caption_interferer": "A man speaking on a microphone",
+            "caption_type": "positive",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/92765.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/47298.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/92765_47298.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/8636_23531.wav",
+            "caption_mixture": "Keep the a goat making noises and a person talking, reduce the a person whistling a tune",
+            "caption_target": "A goat making noises and a person talking",
+            "caption_interferer": "A person whistling a tune",
+            "caption_type": "mixed",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/8636.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/23531.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/8636_23531.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/80225_72419.wav",
+            "caption_mixture": "Enhance the an engine revs as tires squeal and slide on something slippery",
+            "caption_target": "An engine revs as tires squeal and slide on something slippery",
+            "caption_interferer": "Some metal objects are hit while a woman talks",
+            "caption_type": "positive",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/80225.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/72419.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/80225_72419.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/480_66936.wav",
+            "caption_mixture": "Keep the muffled sounds of horse riding, reduce the a man speaks followed by barking of a dog and some light rustling",
+            "caption_target": "Muffled sounds of horse riding",
+            "caption_interferer": "A man speaks followed by barking of a dog and some light rustling",
+            "caption_type": "mixed",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/480.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/66936.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/480_66936.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/6753_99902.wav",
+            "caption_mixture": "Extract the engine revving a running with crackling",
+            "caption_target": "Engine revving a running with crackling",
+            "caption_interferer": "Water trickling and birds chirping",
+            "caption_type": "positive",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/6753.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/99902.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/6753_99902.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/97967_99902.wav",
+            "caption_mixture": "A clip of low hums and sputters of an engine idling",
+            "caption_target": "Low hums and sputters of an engine idling",
+            "caption_interferer": "Water trickling and birds chirping",
+            "caption_type": "descriptive",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/97967.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/99902.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/97967_99902.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/99902_43693.wav",
+            "caption_mixture": "Increase the water trickling and birds chirping and filter out the a man speaks with some scraping footsteps and distant traffic passing",
+            "caption_target": "Water trickling and birds chirping",
+            "caption_interferer": "A man speaks with some scraping footsteps and distant traffic passing",
+            "caption_type": "mixed",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/99902.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/43693.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/99902_43693.safetensors"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/101791_43693.wav",
+            "caption_mixture": "Amplify the birds chirping in the distance with wind blowing",
+            "caption_target": "Birds chirping in the distance with wind blowing",
+            "caption_interferer": "A man speaks with some scraping footsteps and distant traffic passing",
+            "caption_type": "positive",
+            "wav_target": "/Users/ezajlerg/datasets/audiocaps/train/101791.wav",
+            "wav_interferer": "/Users/ezajlerg/datasets/audiocaps/train/43693.wav",
+            "command_embedding": "/Users/ezajlerg/datasets/audiocaps/embeddings/train/101791_43693.safetensors"
+        }
+    ]
 }

@@ -11,7 +11,7 @@ class AudioTextMixDataset(Dataset):
     """
     def __init__(
         self,
-        datafiles, embeddings_dir, sampling_rate=32000, max_clip_len=5,
+        datafiles, sampling_rate=32000,
     ):
         all_data_json = []
         for datafile in datafiles:
@@ -20,16 +20,12 @@ class AudioTextMixDataset(Dataset):
                 all_data_json.extend(data_json)
         self.all_data_json = all_data_json
 
-        self.embeddings_dir = embeddings_dir
-
         self.sampling_rate = sampling_rate
-        self.max_length = max_clip_len * sampling_rate
 
     def __len__(self):
         return len(self.all_data_json)
 
-    def _read_audio(self, index):
-        audio_path = self.all_data_json[index]['wav_mix']
+    def _read_audio(self, audio_path):
         audio_data, audio_rate = torchaudio.load(audio_path, channels_first=True)
 
         # resample audio clip
@@ -43,18 +39,25 @@ class AudioTextMixDataset(Dataset):
 
     def __getitem__(self, index):
         # create a audio tensor  
-        audio_data, audio_rate = self._read_audio(index)
+        mix_audio_data, audio_rate = self._read_audio(self.all_data_json[index]['wav_mixture'])
+        target_audio_data, audio_rate = self._read_audio(self.all_data_json[index]['wav_target'])
+        interferer_audio_data, audio_rate = self._read_audio(self.all_data_json[index]['wav_interferer'])
 
-        data_dict = {
-            'waveform_mix': audio_data,
+        embeddings_path = self.all_data_json[index]['command_embedding']
+
+        out_dict = {
+            'input': {
+                'mixture': mix_audio_data,
+                'condition': load_file(embeddings_path)['command'].unsqueeze(0),
+                'interferers': interferer_audio_data, # need unsqueeze?
+                'segments': target_audio_data
+            },
+            'target': {
+                'segment': target_audio_data.squeeze(1)
+            }
         }
 
-        audio_path = self.all_data_json[index]['wav_mix']
-        filename = os.path.basename(audio_path).split('.')[0] + '.safetensors'
-        embeddings_path = os.path.join(self.embeddings_dir, filename)
-        data_dict['command_embedding'] = load_file(embeddings_path)['command']
-     
-        return data_dict
+        return out_dict
 
 
 class AudioTextMixDataLoader(DataLoader):

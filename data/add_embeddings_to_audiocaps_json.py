@@ -13,7 +13,7 @@ def add_embeddings_to_audiocaps_json(json_path, embed_dir):
             data_dict["command_embedding"] = embed_path
 
     with open(json_path, 'w') as f:
-        json.dump({ "data": data }, f, indent=4)
+        json.dump(data, f, indent=4)
 
     print(f"Template json file created at {json_path}")
 
