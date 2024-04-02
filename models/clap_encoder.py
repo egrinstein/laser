@@ -38,8 +38,7 @@ class CLAP_Encoder(nn.Module):
             p.requires_grad = False
 
         self.model.eval()
-        self.encoder_type = 'CLAP'
-
+        
     def batch_to_list(self, batch):
         ret = []
         for i in range(batch.size(0)):

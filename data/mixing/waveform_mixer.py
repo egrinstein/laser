@@ -3,11 +3,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import pyloudnorm as pyln
+
 from typing import List
 
 
 class WaveformMixer(nn.Module):
-    def __init__(self, max_mix_num=2, lower_db=-10, higher_db=10):
+    def __init__(self, max_mix_num=2, lower_db=-10, higher_db=10,
+                 sampling_rate=32000, max_clip_len=5,):
         super().__init__()
 
         self.max_mix_num = max_mix_num
@@ -15,6 +17,9 @@ class WaveformMixer(nn.Module):
             'lower_db': lower_db,
             'higher_db': higher_db,
         }
+
+        self.sampling_rate = sampling_rate
+        self.max_length = max_clip_len * sampling_rate
 
     def __call__(self, waveforms, texts=None):
         batch_size = waveforms.shape[0]
@@ -36,7 +41,7 @@ class WaveformMixer(nn.Module):
             noise_waveforms = [waveforms[i] for i in noise_track_idxs]
             mixed_texts_n = [texts[i] for i in noise_track_idxs]
 
-            mixture = self.mix_waveforms(segment, noise_waveforms)
+            mixture = self.apply(segment, noise_waveforms)
 
             data_dict['segment'].append(segment)
             data_dict['mixture'].append(mixture)
@@ -89,7 +94,10 @@ class WaveformMixer(nn.Module):
 
         return track_ids_to_add
 
-    def mix_waveforms(self, target_track: torch.Tensor, noise_waveforms: List[torch.Tensor]):
+    def apply(self, target_track: torch.Tensor, noise_waveforms: List[torch.Tensor]):
+        # crop target and noise waveforms, and convert to mono
+        target_track = self._cut_or_randomcrop(self._to_mono(target_track))
+        noise_waveforms = [self._cut_or_randomcrop(self._to_mono(noise)) for noise in noise_waveforms]
 
         # create zero tensors as the background template
         noise = torch.zeros_like(target_track)
@@ -111,6 +119,31 @@ class WaveformMixer(nn.Module):
             mixture *= 0.9 / max_value
         
         return mixture
+
+    def _cut_or_randomcrop(self, waveform):
+        # waveform: [1, samples]
+        # random crop
+        if waveform.size(1) > self.max_length:
+            random_idx = random.randint(0, waveform.size(1)-self.max_length)
+            waveform = waveform[:, random_idx:random_idx+self.max_length]
+        else:
+            temp_wav = torch.zeros(1, self.max_length)
+            temp_wav[:, 0:waveform.size(1)] = waveform
+            waveform = temp_wav
+
+        assert waveform.size(1) == self.max_length, \
+            f"number of audio samples is {waveform.size(1)}"
+
+        return waveform
+    
+    def _to_mono(self, audio_data):
+        # convert stero to single channel
+        if audio_data.shape[0] > 1:
+            # audio_data: [samples]
+            audio_data = (audio_data[0] + audio_data[1]) / 2
+            audio_data = audio_data.unsqueeze(0)
+
+        return audio_data
 
 
 def rescale_to_match_energy(segment1, segment2):

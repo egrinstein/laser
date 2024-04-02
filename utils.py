@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Dict
 import numpy as np
-from data.waveform_mixer import WaveformMixer
+from data.mixing.waveform_mixer import WaveformMixer
 import torch
 import torch.nn as nn
 import yaml

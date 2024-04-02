@@ -23,6 +23,7 @@ import json
 import pandas as pd
 import argparse
 
+
 def create_template_json_audiocaps(csv_file, audiocaps_wav_path, output_json):
     # Read the csv file
     df = pd.read_csv(csv_file)
