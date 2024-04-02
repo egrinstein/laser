@@ -43,7 +43,7 @@ COMMAND_TYPES = [
 ]
 
 
-def caption_to_random_command(caption: str, interferer_captions: list[str]):
+def caption_to_random_command(caption: str, interferer_captions: list[str], return_type = False):
     # Sometimes AudioSet's captions have synonyms separated by commas.
     # For example, one class is Accelerating, revving, vroom
     # We can split these and choose one randomly.
@@ -74,7 +74,10 @@ def caption_to_random_command(caption: str, interferer_captions: list[str]):
     else:
         raise ValueError("Invalid command type")
 
-    return query
+    if return_type:
+        return query, command_type
+    else:
+        return query
 
 if __name__ == "__main__":
     caption = "male speech"

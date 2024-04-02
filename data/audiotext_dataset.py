@@ -32,6 +32,8 @@ class AudioTextDataset(Dataset):
         return len(self.all_data_json)
 
     def _cut_or_randomcrop(self, waveform):
+        # TODO: remove this funcion, which is now duplicated in data/mixing/waveform_mixer.py
+        
         # waveform: [1, samples]
         # random crop
         if waveform.size(1) > self.max_length:

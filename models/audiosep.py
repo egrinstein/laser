@@ -39,7 +39,6 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.ss_model = ss_model
         self.waveform_mixer = waveform_mixer
         self.query_encoder = query_encoder
-        self.query_encoder_type = self.query_encoder.encoder_type
         self.use_text_ratio = use_text_ratio
         self.loss_function = loss_function
         self.optimizer_type = optimizer_type

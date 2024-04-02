@@ -15,7 +15,7 @@ from models.metrics import (
     calculate_sdr,
     calculate_sisdr,
 )
-from data.waveform_mixer import WaveformMixer
+from data.mixing.waveform_mixer import WaveformMixer
 
 from utils import get_mean_from_dict_values, get_data_module, load_ss_model
 
@@ -74,7 +74,7 @@ class AudioTextDatasetEvaluator:
             noise_track_idxs = self.waveform_mixer.get_noise_track_idxs(self.dataset, idx)
             mixture_texts = [self.dataset[i]['text'] for i in noise_track_idxs]
             interferers = [self.dataset[i]['waveform'] for i in noise_track_idxs]
-            mixture = self.waveform_mixer.mix_waveforms(source, interferers)
+            mixture = self.waveform_mixer.apply(source, interferers)
 
             sdr_no_sep = calculate_sdr(ref=source, est=mixture)
 

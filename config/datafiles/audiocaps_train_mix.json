@@ -1,0 +1,54 @@
+{
+    "data": [
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/49922_43693.wav",
+            "caption_mixture": "Eliminate the interfering a man speaks with some scraping footsteps and distant traffic passing",
+            "caption_type": "negative"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/43693_69467.wav",
+            "caption_mixture": "Boost the a man speaks with some scraping footsteps and distant traffic passing and reduce the and an animal bleats once in the foreground followed by four quiet metal taps",
+            "caption_type": "mixed"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/92765_47298.wav",
+            "caption_mixture": "A clip playing an audio of a person sighs",
+            "caption_type": "descriptive"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/8636_23531.wav",
+            "caption_mixture": "Boost the a goat making noises and a person talking, filter out the a person whistling a tune",
+            "caption_type": "mixed"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/80225_72419.wav",
+            "caption_mixture": "Enhance the an engine revs as tires squeal and slide on something slippery and discard the some metal objects are hit while a woman talks",
+            "caption_type": "mixed"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/480_66936.wav",
+            "caption_mixture": "Boost the muffled sounds of horse riding, remove the a man speaks followed by barking of a dog and some light rustling",
+            "caption_type": "mixed"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/6753_99902.wav",
+            "caption_mixture": "Enhance the engine revving a running with crackling, remove the water trickling and birds chirping",
+            "caption_type": "mixed"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/97967_99902.wav",
+            "caption_mixture": "Remove the water trickling and birds chirping",
+            "caption_type": "negative"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/99902_43693.wav",
+            "caption_mixture": "Reduce the a man speaks with some scraping footsteps and distant traffic passing",
+            "caption_type": "negative"
+        },
+        {
+            "wav_mixture": "/Users/ezajlerg/datasets/audiocaps/mix/train/101791_43693.wav",
+            "caption_mixture": "This is an audio of birds chirping in the distance with wind blowing",
+            "caption_type": "descriptive"
+        }
+    ]
+}

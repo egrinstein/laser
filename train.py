@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from models.resunet import *
 from losses import get_loss_function
 from models.audiosep import AudioSep, get_model_class
-from data.waveform_mixer import WaveformMixer
+from data.mixing.waveform_mixer import WaveformMixer
 from models.clap_encoder import CLAP_Encoder
 from models.tinyclip_encoder import TinyCLIP_Encoder
 from callbacks.base import CheckpointEveryNSteps

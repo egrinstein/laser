@@ -7,6 +7,7 @@
 # The mixer will mix the rows in the csv file to create a new csv file with the following columns:
 # ,audiocap_id_target,audiocap_id_interferer, youtube_id_target, youtube_id_interferer, start_time_target, start_time_interferer, caption_target, caption_interferer, caption_similarity
 
+import argparse
 import os
 import pandas as pd
 import torch
@@ -80,9 +81,19 @@ def mix_audiocaps_csv(input_csv, output_csv, n_mix=-1, caption_similarity_func=N
 
 
 if __name__ == '__main__':
-    input_csv = 'config/datafiles/csvs/train_audiocaps.csv'
-    output_csv = 'config/datafiles/csvs/train_audiocaps_mixed.csv'
 
     print("Loading the query encoder (CLAP)...")
     clap_similarity = ClapSimilarity()
-    mix_audiocaps_csv(input_csv, output_csv, n_mix=1000, caption_similarity_func=clap_similarity)
+    
+    parser = argparse.ArgumentParser(description="Create a template json file for the audiocaps dataset")
+    parser.add_argument("--in_csv_dir", type=str, required=True, help="Path to the directory containing the files train.csv, val.csv, test.csv")
+    parser.add_argument("--out_csv_dir", type=str, required=True, help="Path to the directory where the .json files will be saved")
+    args = parser.parse_args()
+    
+    for split in ["train", "val", "test"]:
+        in_csv_file = os.path.join(args.in_csv_dir, f"{split}.csv")
+        output_csv = os.path.join(args.out_csv_dir, f"audiocaps_{split}_mix.csv")
+
+        print(f"Creating mix.csv file for {split} split")
+        
+        mix_audiocaps_csv(in_csv_file, output_csv, n_mix=100, caption_similarity_func=clap_similarity)

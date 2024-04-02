@@ -29,7 +29,6 @@ class TinyCLIP_Encoder(nn.Module):
             p.requires_grad = False
 
         self.model.eval()
-        self.encoder_type = 'TinyCLIP'
 
         self.caption_to_command = caption_to_command
 
