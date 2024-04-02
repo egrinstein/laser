@@ -243,6 +243,7 @@ def get_data_module(
     
     # audio-text datasets
     datafiles = configs['data']['train_datafiles']
+    print(f"train_datafiles: {datafiles}")
     
     # dataset
     dataloader = AudioTextDataLoader(
@@ -255,9 +256,23 @@ def get_data_module(
     test_dataloader = None
     if 'test_datafiles' in configs['data']:
         test_datafiles = configs['data']['test_datafiles']
+        print(f"test_datafiles: {test_datafiles}")
         if test_datafiles:
             test_dataloader = AudioTextDataLoader(
                 datafiles=test_datafiles, 
+                sampling_rate=sampling_rate, 
+                max_clip_len=segment_seconds,
+                batch_size=batch_size,
+                shuffle=False,
+            )
+
+    val_dataloader = None
+    if 'val_datafiles' in configs['data']:
+        val_datafiles = configs['data']['val_datafiles']
+        print(f"val_datafiles: {val_datafiles}")
+        if val_datafiles:
+            val_dataloader = AudioTextDataLoader(
+                datafiles=val_datafiles, 
                 sampling_rate=sampling_rate, 
                 max_clip_len=segment_seconds,
                 batch_size=batch_size,
@@ -269,6 +284,7 @@ def get_data_module(
         train_dataloader=dataloader,
         num_workers=num_workers,
         batch_size=batch_size,
+        val_dataloader=val_dataloader,
         test_dataloader=test_dataloader,
     )
 

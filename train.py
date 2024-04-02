@@ -179,7 +179,8 @@ def train(args) -> NoReturn:
         optimizer_type=optimizer_type,
         learning_rate=learning_rate,
         lr_lambda_func=lr_lambda_func,
-        use_text_ratio=use_text_ratio
+        use_text_ratio=use_text_ratio,
+        query_augmentation=configs['model']['query_augmentation'],
     )
 
     checkpoint_every_n_steps = CheckpointEveryNSteps(
@@ -191,17 +192,18 @@ def train(args) -> NoReturn:
 
     callbacks = [checkpoint_every_n_steps]
 
+    accelerator = configs['accelerator'] if configs['accelerator'] else 'auto'
     device = configs['device'] if configs['device'] else 'auto'
     trainer = pl.Trainer(
-        accelerator=device,
-        devices='auto',
+        accelerator=accelerator,
+        devices=device,
         #strategy='ddp_find_unused_parameters_true',
         num_nodes=num_nodes,
         precision="32-true",
         logger=None,
         callbacks=callbacks,
         fast_dev_run=False,
-        max_epochs=-1,
+        max_epochs=200,
         log_every_n_steps=50,
         use_distributed_sampler=True,
         sync_batchnorm=sync_batchnorm,

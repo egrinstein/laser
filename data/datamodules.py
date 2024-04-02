@@ -10,6 +10,7 @@ class DataModule(pl.LightningDataModule):
         train_dataloader: object,
         batch_size: int,
         num_workers: int,
+        val_dataloader: object = None,
         test_dataloader: object = None,
     ):
         r"""Data module. To get one batch of data:
@@ -30,6 +31,7 @@ class DataModule(pl.LightningDataModule):
         """
         super().__init__()
         self._train_dataloader = train_dataloader
+        self._val_dataloader = val_dataloader
         self._test_dataloader = test_dataloader
 
         self.num_workers = num_workers
@@ -62,7 +64,7 @@ class DataModule(pl.LightningDataModule):
     def val_dataloader(self):
         # val_split = Dataset(...)
         # return DataLoader(val_split)
-        pass
+        return self._val_dataloader
 
     def test_dataloader(self) -> torch.utils.data.DataLoader:
         r"""Get test loader."""

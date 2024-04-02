@@ -14,7 +14,7 @@ class AudioTextDataset(Dataset):
     """
     def __init__(
         self,
-        datafiles=[''], 
+        datafiles, 
         sampling_rate=32000, 
         max_clip_len=5,
     ):
@@ -130,7 +130,7 @@ def collate_fn(list_data_dict):
 
 
 class AudioTextDataLoader(DataLoader):
-    def __init__(self, datafiles=[''], 
+    def __init__(self, datafiles, 
         sampling_rate=32000, 
         max_clip_len=5, *args, **kwargs):
         

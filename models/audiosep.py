@@ -143,6 +143,9 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
     def training_step(self, batch_data_dict, batch_idx):
         return self._step(batch_data_dict, batch_idx, prefix='train')
+    
+    def validation_step(self, batch, batch_idx):
+        return self._step(batch, batch_idx, prefix='val')
 
     def test_step(self, batch, batch_idx):
         return self._step(batch, batch_idx, prefix='test')
