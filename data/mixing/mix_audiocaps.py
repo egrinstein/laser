@@ -27,7 +27,7 @@ import torchaudio
 
 from tqdm import tqdm
 
-from query_augmentation import caption_to_random_command
+from commander import random_template_command
 from data.mixing.waveform_mixer import WaveformMixer
 
 
@@ -53,12 +53,14 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json):
             print(f"Skipping row {index} as wav file not found")
             continue
 
-        command, command_type = caption_to_random_command(
+        command, command_type = random_template_command(
             row['caption_target'], [row['caption_interferer']], return_type=True)
 
         data_dict = {
             "wav_mixture": out_path,
             "caption_mixture": command,
+            "caption_target": row["caption_target"],
+            "caption_interferer": row["caption_interferer"],
             "caption_type": command_type
         }
         data.append(data_dict)
@@ -70,7 +72,7 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json):
         wav_target, sr = torchaudio.load(path_target, channels_first=True)
         wav_interferer, sr = torchaudio.load(path_interferer, channels_first=True)
 
-        mixture = waveform_mixer.apply(
+        mixture = waveform_mixer.mix(
             wav_target,
             [wav_interferer]
         )

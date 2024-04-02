@@ -88,7 +88,7 @@ class CLAP_Encoder(nn.Module):
         return embed.detach()
 
 
-    def __call__(self, modality, audio=None, text=None, use_text_ratio=0.5):
+    def __call__(self, modality, audio=None, text=None, use_text_ratio=1):
         if modality == 'audio':
             embed = self._get_audio_embed(audio)
         elif modality == 'text':

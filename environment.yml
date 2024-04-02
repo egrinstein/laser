@@ -11,6 +11,7 @@ dependencies:
       - librosa
       - torchlibrosa
       - transformers
+      - optimum
       - ftfy
       - braceexpand
       - wget

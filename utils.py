@@ -8,9 +8,9 @@ import torch
 import torch.nn as nn
 import yaml
 
-from losses import get_loss_function
+from models.metrics import get_loss_function
 from models.clap_encoder import CLAP_Encoder
-from models.audiosep import AudioSep, get_model_class
+from models.sepcommander import AudioSep, get_model_class
 from data.audiotext_dataset import AudioTextDataLoader
 from data.datamodules import DataModule
 
@@ -23,7 +23,6 @@ def ignore_warnings():
     # Refined regex pattern to capture variations in the warning message
     pattern = r"Some weights of the model checkpoint at roberta-base were not used when initializing RobertaModel: \['lm_head\..*'\].*"
     warnings.filterwarnings('ignore', message=pattern)
-
 
 
 def create_logging(log_dir, filemode):

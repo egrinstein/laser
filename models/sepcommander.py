@@ -8,7 +8,7 @@ from torchmetrics.functional.audio import signal_distortion_ratio, scale_invaria
 from huggingface_hub import PyTorchModelHubMixin
 from torch.optim.lr_scheduler import LambdaLR
 
-from query_augmentation import caption_to_random_command
+from commander import random_template_command
 
 
 class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
@@ -78,7 +78,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         if self.query_augmentation:
             z = list(zip(batch_text, mixture_texts))
             batch_text = [
-                caption_to_random_command(t, mt)
+                random_template_command(t, mt)
                 for t, mt in z
             ]
 

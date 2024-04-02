@@ -74,7 +74,7 @@ class AudioTextDatasetEvaluator:
             noise_track_idxs = self.waveform_mixer.get_noise_track_idxs(self.dataset, idx)
             mixture_texts = [self.dataset[i]['text'] for i in noise_track_idxs]
             interferers = [self.dataset[i]['waveform'] for i in noise_track_idxs]
-            mixture = self.waveform_mixer.apply(source, interferers)
+            mixture = self.waveform_mixer.mix(source, interferers)
 
             sdr_no_sep = calculate_sdr(ref=source, est=mixture)
 

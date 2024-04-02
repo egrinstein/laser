@@ -41,7 +41,7 @@ class WaveformMixer(nn.Module):
             noise_waveforms = [waveforms[i] for i in noise_track_idxs]
             mixed_texts_n = [texts[i] for i in noise_track_idxs]
 
-            mixture = self.apply(segment, noise_waveforms)
+            mixture = self.mix(segment, noise_waveforms)
 
             data_dict['segment'].append(segment)
             data_dict['mixture'].append(mixture)
@@ -94,7 +94,7 @@ class WaveformMixer(nn.Module):
 
         return track_ids_to_add
 
-    def apply(self, target_track: torch.Tensor, noise_waveforms: List[torch.Tensor]):
+    def mix(self, target_track: torch.Tensor, noise_waveforms: List[torch.Tensor]):
         # crop target and noise waveforms, and convert to mono
         target_track = self._cut_or_randomcrop(self._to_mono(target_track))
         noise_waveforms = [self._cut_or_randomcrop(self._to_mono(noise)) for noise in noise_waveforms]

@@ -4,13 +4,30 @@ import numpy as np
 import torch
 from optimum.pipelines import pipeline
 
-CORRECTOR = pipeline(
-    "text2text-generation", 
-    model='pszemraj/flan-t5-large-grammar-synthesis', 
-    accelerator="ort",
-    device="cuda",
-    # cache_dir='/data/oliveira/tmp'
-)
+
+class TemplateCommandCreator:
+    def __init__(self, use_corrector=True):
+        self.corrector = CommandCorrector() if use_corrector else None
+    
+    def __call__(self, caption, interferer_captions, return_type=False):
+        return random_template_command(
+            caption, interferer_captions,
+            corrector=self.corrector, return_type=return_type)
+
+
+class CommandCorrector:
+    def __init__(self):        
+        self.model = pipeline(
+            "text2text-generation", 
+            model='pszemraj/flan-t5-large-grammar-synthesis', 
+            accelerator="ort",
+            device="cuda",
+            # cache_dir='/data/oliveira/tmp'
+        )
+    
+    def __call__(self, text):
+        return self.model(text)
+
 
 POSITIVE_QUERIES = [
     "Keep the {}",
@@ -57,7 +74,8 @@ COMMAND_TYPES = [
 ]
 
 
-def caption_to_random_command(caption: str, interferer_captions: list[str], return_type = False):
+def random_template_command(caption: str, interferer_captions: list[str], return_type = False,
+                              corrector=None):
     # Sometimes AudioSet's captions have synonyms separated by commas.
     # For example, one class is Accelerating, revving, vroom
     # We can split these and choose one randomly.
@@ -90,9 +108,11 @@ def caption_to_random_command(caption: str, interferer_captions: list[str], retu
         query = random.choice(MIXED_QUERIES).format(caption, interferer_captions)
     else:
         raise ValueError(f"Invalid command type: {command_type}")
-    with warnings.catch_warnings(action="ignore"):
-        with torch.no_grad():
-            query = CORRECTOR(query)[0]["generated_text"]    
+    
+    if corrector:
+        with warnings.catch_warnings(action="ignore"):
+            with torch.no_grad():
+                query = corrector(query)[0]["generated_text"]
 
     if return_type:
         return query, command_type
@@ -101,4 +121,4 @@ def caption_to_random_command(caption: str, interferer_captions: list[str], retu
 
 if __name__ == "__main__":
     caption = "male speech"
-    print(caption_to_random_command(caption))
+    print(random_template_command(caption))

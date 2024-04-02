@@ -3,11 +3,11 @@ task_name: AudioSep
 
 data:
     train_datafiles:
-        - '/export/home/oliveira/audiosep_commands/config/datafiles/audiocaps_train.json'
+        - 'config/datafiles/audiocaps_train.json'
     val_datafiles:
-        - '/export/home/oliveira/audiosep_commands/config/datafiles/audiocaps_val.json'
+        - 'config/datafiles/audiocaps_val.json'
     test_datafiles:
-        - '/export/home/oliveira/audiosep_commands/config/datafiles/audiocaps_test.json'
+        - 'config/datafiles/audiocaps_test.json'
 
     sampling_rate: 32000
     segment_seconds: 5
@@ -44,5 +44,5 @@ train:
     early_stop_steps: 10000001
     random_seed: 1234
 
-accelerator: gpu
+accelerator: mps
 device: [0]

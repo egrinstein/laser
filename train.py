@@ -7,13 +7,13 @@ import lightning.pytorch as pl
 from typing import List, NoReturn
 from torch.utils.tensorboard import SummaryWriter
 from models.resunet import *
-from losses import get_loss_function
-from models.audiosep import AudioSep, get_model_class
+from models.metrics import get_loss_function
+from models.sepcommander import AudioSep, get_model_class
 from data.mixing.waveform_mixer import WaveformMixer
 from models.clap_encoder import CLAP_Encoder
 from models.tinyclip_encoder import TinyCLIP_Encoder
 from callbacks.base import CheckpointEveryNSteps
-from optimizers.lr_schedulers import get_lr_lambda
+from models.lr_schedulers import get_lr_lambda
 
 from utils import create_logging, parse_yaml, get_data_module
 
