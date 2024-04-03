@@ -94,15 +94,16 @@ class WaveformMixer(nn.Module):
 
         return track_ids_to_add
 
-    def mix(self, target_track: torch.Tensor, noise_waveforms: List[torch.Tensor]):
+    def mix(self, target_track: torch.Tensor, noise_tracks: List[torch.Tensor], return_tracks=False):
         # crop target and noise waveforms, and convert to mono
+
         target_track = self._cut_or_randomcrop(self._to_mono(target_track))
-        noise_waveforms = [self._cut_or_randomcrop(self._to_mono(noise)) for noise in noise_waveforms]
+        noise_tracks = [self._cut_or_randomcrop(self._to_mono(noise)) for noise in noise_tracks]
 
         # create zero tensors as the background template
         noise = torch.zeros_like(target_track)
         # add tracks to the mixture
-        for next_segment in noise_waveforms:
+        for next_segment in noise_tracks:
             rescaled_next_segment = dynamic_loudnorm(audio=next_segment, reference=target_track, **self.loudness_param)
             noise += rescaled_next_segment
 
@@ -118,7 +119,10 @@ class WaveformMixer(nn.Module):
             target_track *= 0.9 / max_value
             mixture *= 0.9 / max_value
         
-        return mixture
+        if return_tracks:
+            return mixture, target_track, noise_tracks
+        else:
+            return mixture
 
     def _cut_or_randomcrop(self, waveform):
         # waveform: [1, samples]
@@ -136,14 +140,16 @@ class WaveformMixer(nn.Module):
 
         return waveform
     
-    def _to_mono(self, audio_data):
-        # convert stero to single channel
-        if audio_data.shape[0] > 1:
-            # audio_data: [samples]
-            audio_data = (audio_data[0] + audio_data[1]) / 2
-            audio_data = audio_data.unsqueeze(0)
+    def _to_mono(self, audio: torch.Tensor):
+        # convert stereo to single channel
+        if len(audio.shape) == 1:
+            return audio.unsqueeze(0)
+        elif audio.shape[0] > 1:
+            # audio: [samples]
+            audio = (audio[0] + audio[1]) / 2
+            audio = audio.unsqueeze(0)
 
-        return audio_data
+        return audio
 
 
 def rescale_to_match_energy(segment1, segment2):

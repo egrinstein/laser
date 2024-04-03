@@ -52,11 +52,14 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         Args:
             batch_audio_text_dict: e.g. 
             {
-                    'input': { 'mixture': torch.Tensor,
-                               'condition': torch.Tensor,
-                               'interferers': torch.Tensor,
-                               'segments': torch.Tensor}
-                    'target': torch.Tensor
+                    'input': {
+                        'mixture': torch.Tensor,
+                        'condition': torch.Tensor
+                    }
+                    'target': {
+                        'interferers': torch.Tensor,
+                        'segment': torch.Tensor
+                    }
             }
             
         Returns:
@@ -71,7 +74,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         if prefix == 'train':
             self.ss_model.train()
         model_output = self.ss_model(input_dict)['waveform']
-        model_output = model_output.squeeze()
+        model_output = model_output.squeeze(1)
         # (batch_size, 1, segment_samples)
 
         output_dict = {'segment': model_output}
@@ -82,21 +85,20 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         log_dict = {f"{prefix}_loss": loss}
         
         if compute_sdr and batch_idx % sdr_freq == 0: # Modify this to control the frequency of metrics computation            
-            interferers = input_dict['interferers']
-            segments = input_dict['segments']
+            interferers = target_dict['interferers']
+            segments = target_dict['segment']
             if interferers.shape[1] != 1:
                 raise ValueError("Only a single interferer is currently supported.")
             else:
                 interferers = interferers[:, 0]
-
             if model_output.device.type == "mps":
                 # SDR calculation is not supported on mps
                 model_output = model_output.cpu()
                 segments = segments.cpu()
                 interferers = interferers.cpu()
 
-            sdr = signal_distortion_ratio(model_output, segments.squeeze(1))
-            sisdr = scale_invariant_signal_distortion_ratio(model_output, segments.squeeze(1))
+            sdr = signal_distortion_ratio(model_output, segments)
+            sisdr = scale_invariant_signal_distortion_ratio(model_output, segments)
 
             model_output_tensor = model_output.unsqueeze(1).repeat(1, interferers.size(1), 1)
             interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output_tensor, interferers)

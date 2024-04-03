@@ -47,13 +47,12 @@ class AudioTextMixDataset(Dataset):
 
         out_dict = {
             'input': {
-                'mixture': mix_audio_data,
-                'condition': load_file(embeddings_path)['command'].unsqueeze(0),
-                'interferers': interferer_audio_data, # need unsqueeze?
-                'segments': target_audio_data
+                'mixture': mix_audio_data.squeeze(1),
+                'condition': load_file(embeddings_path)['command'],
             },
             'target': {
-                'segment': target_audio_data.squeeze(1)
+                'interferers': interferer_audio_data,
+                'segment': target_audio_data.squeeze(),
             }
         }
 
@@ -63,12 +62,11 @@ class AudioTextMixDataset(Dataset):
 class AudioTextMixDataLoader(DataLoader):
     def __init__(self, datafiles, 
         sampling_rate=32000, 
-        max_clip_len=5, *args, **kwargs):
+        *args, **kwargs):
         
         self._dataset = AudioTextMixDataset(
             datafiles=datafiles, 
-            sampling_rate=sampling_rate, 
-            max_clip_len=max_clip_len
+            sampling_rate=sampling_rate,
         )
 
         super().__init__(self._dataset, *args, **kwargs)

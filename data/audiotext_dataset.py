@@ -184,17 +184,14 @@ class AudioTextDataLoader(DataLoader):
             audio=segments.squeeze(1),
         )
 
-        breakpoint()
-
         return {
             'input': {
                 'mixture': mixtures[:, None, :].squeeze(1),
                 'condition': conditions,
-                'interferers': interferers,
-                'segments': segments
             },
             'target': {
-                'segment': segments.squeeze(1),
+                'interferers': interferers,
+                'segment': segments.squeeze(1)
             }
         }
     

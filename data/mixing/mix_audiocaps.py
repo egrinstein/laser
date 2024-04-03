@@ -6,8 +6,6 @@
 # audiocap_id_target,audiocap_id_interferer,youtube_id_target,youtube_id_interferer,start_time_target,start_time_interferer,caption_target,caption_interferer,caption_similarity
 # 66688,20637,_8DVd3NKuTA,7i2gPewuazM,30,130,"A person laughs, followed by a baby laughing, after which both a person and a baby laugh",Beeps and buzzing is going off while a man speaks and starts an engine,0.1799960881471634
 #
-#
-
 
 import argparse
 import os
@@ -21,7 +19,8 @@ from commander import random_template_command
 from data.mixing.waveform_mixer import WaveformMixer
 
 
-def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json):
+def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
+                     sr=32000):
     # Read the csv file
     df = pd.read_csv(csv_file)
     data = []
@@ -35,10 +34,17 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json):
                 audiocaps_wav_path, f"{row['audiocap_id_target']}.wav")
         path_interferer = os.path.join(
                 audiocaps_wav_path, f"{row['audiocap_id_interferer']}.wav")
-        out_path = os.path.join(
+        out_mix_path = os.path.join(
                 mix_wav_path,
                 f"{row['audiocap_id_target']}_{row['audiocap_id_interferer']}.wav")
-        
+        # Need to save the target and interferer as they are cropped to 5 seconds
+        out_target_path = os.path.join(
+                mix_wav_path,
+                f"{row['audiocap_id_target']}.wav")
+        out_interferer_path = os.path.join(
+                mix_wav_path,
+                f"{row['audiocap_id_interferer']}.wav")
+
         if not os.path.exists(path_target) or not os.path.exists(path_interferer):
             print(f"Skipping row {index} as wav file not found")
             continue
@@ -47,35 +53,53 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json):
             row['caption_target'], [row['caption_interferer']], return_type=True)
 
         data_dict = {
-            "wav_mixture": out_path,
+            "wav_mixture": out_mix_path,
+            "wav_target": out_target_path,
+            "wav_interferer": out_interferer_path,
             "caption_mixture": command,
             "caption_target": row["caption_target"],
             "caption_interferer": row["caption_interferer"],
             "caption_type": command_type,
-            "wav_target": path_target,
-            "wav_interferer": path_interferer,
         }
         data.append(data_dict)
 
-        if os.path.exists(out_path):
-            print(f"Skipping row {index} as mix wav file already exists")
-            continue
+        # if os.path.exists(out_mix_path):
+        #     print(f"Skipping row {index} as mix wav file already exists")
+        #     continue
 
-        wav_target, sr = torchaudio.load(path_target, channels_first=True)
-        wav_interferer, sr = torchaudio.load(path_interferer, channels_first=True)
+        wav_target = _load_audio(path_target, sr)
+        wav_interferer = _load_audio(path_interferer, sr)
 
-        mixture = waveform_mixer.mix(
+        mixture, target, interferers  = waveform_mixer.mix(
             wav_target,
-            [wav_interferer]
+            [wav_interferer],
+            return_tracks=True
         )
 
-        torchaudio.save(out_path, mixture, sr)
+        torchaudio.save(out_mix_path, mixture, sr)
+        torchaudio.save(out_target_path, target, sr)
+        torchaudio.save(out_interferer_path, interferers[0], sr)
 
     # Write the dictionary to a json file
     with open(output_json, 'w') as f:
         json.dump({ "data": data}, f, indent=4)
     
     print(f"Template json file created at {output_json}")
+
+
+def _load_audio(path, target_sr):
+    audio, sr = torchaudio.load(path, channels_first=True)
+    if audio.shape[0] > 1:
+        # audio: [samples]
+        audio = (audio[0] + audio[1]) / 2
+    else:
+        audio = audio.squeeze(0)
+
+    if sr != target_sr:
+        audio = torchaudio.functional.resample(audio, orig_freq=sr, new_freq=target_sr)
+        
+    return audio
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a template json file for the audiocaps dataset")

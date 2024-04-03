@@ -15,6 +15,7 @@ data:
         lower_db: -10
         higher_db: 10
     max_mix_num: 2
+    is_premixed: true
 
 model:
     query_net: CLAP
