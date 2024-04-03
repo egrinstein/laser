@@ -96,4 +96,4 @@ if __name__ == '__main__':
 
         print(f"Creating mix.csv file for {split} split")
         
-        mix_audiocaps_csv(in_csv_file, output_csv, n_mix=100, caption_similarity_func=clap_similarity)
+        mix_audiocaps_csv(in_csv_file, output_csv, n_mix=-1, caption_similarity_func=clap_similarity)

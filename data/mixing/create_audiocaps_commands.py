@@ -17,7 +17,7 @@ from models.clap_encoder import CLAP_Encoder
 from safetensors.torch import save_file
 
 
-def create_commands(in_csv_path, out_dir_path, mode = "template"):
+def create_commands(in_csv_path, out_dir_path, mode = "template", use_corrector = True):
     """
 
     Args:
@@ -27,7 +27,7 @@ def create_commands(in_csv_path, out_dir_path, mode = "template"):
         followed by gramatical correction using deep learning. Conversely, "e2e" will ask a GPT to generate a command. Defaults to "template".
     """
 
-    command_creator = CommandCreator(mode=mode, use_corrector=False)
+    command_creator = CommandCreator(mode=mode, use_corrector=use_corrector)
     encoder = CLAP_Encoder().eval()
 
     os.makedirs(out_dir_path, exist_ok=True)
@@ -62,9 +62,10 @@ if __name__ == "__main__":
     parser.add_argument('--in_csv_dir', type=str, help='Path to input mix.csv files (train, val, test)')
     parser.add_argument('--out_dir', type=str, help='Path to output directory where the commands will be saved')
     parser.add_argument('--mode', type=str, default='template', help='Mode to create commands. Either "template" or "e2e"')
+    parser.add_argument('--dont_use_corrector', action='store_true', help='Use the corrector to generate commands')
     args = parser.parse_args()
 
     for split in ['train', 'val', 'test']:
         in_csv_path = os.path.join(args.in_csv_dir, f"audiocaps_{split}_mix.csv")
         out_dir_path = os.path.join(args.out_dir, split)
-        create_commands(in_csv_path, out_dir_path, mode=args.mode)
+        create_commands(in_csv_path, out_dir_path, mode=args.mode, use_corrector=not args.dont_use_corrector)
