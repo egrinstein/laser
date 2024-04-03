@@ -15,7 +15,7 @@ import torchaudio
 
 from tqdm import tqdm
 
-from commander import random_template_command
+from commander import CommandCreator
 from data.mixing.waveform_mixer import WaveformMixer
 
 
@@ -27,6 +27,7 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
 
     waveform_mixer = WaveformMixer()
     os.makedirs(mix_wav_path, exist_ok=True)
+    command_creator = CommandCreator(mode="template", use_corrector=True)
 
     for index, row in tqdm(df.iterrows()):
         # Create the dictionary
@@ -48,9 +49,9 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
         if not os.path.exists(path_target) or not os.path.exists(path_interferer):
             print(f"Skipping row {index} as wav file not found")
             continue
-
-        command, command_type = random_template_command(
-            row['caption_target'], [row['caption_interferer']], return_type=True)
+        
+        command, command_type = command_creator(row["caption_target"],
+                                                [row["caption_interferer"]])
 
         data_dict = {
             "wav_mixture": out_mix_path,

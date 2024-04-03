@@ -7,8 +7,7 @@ from safetensors.torch import load_file
 
 
 class AudioTextMixDataset(Dataset):
-    """Can sample data from audio-text-mix databases
-    """
+    """Can sample data from audio-text-mix databases"""
     def __init__(
         self,
         datafiles, sampling_rate=32000,
