@@ -1,7 +1,7 @@
 .PHONY:
 
 download:
-	@python data/downloaders/audiocaps.py --out_dir ~/datasets/audiocaps --csv_dir config/datafiles/csvs
+	@python data/download_audiocaps.py --out_wav_dir ~/datasets/audiocaps --out_csv_dir config/datafiles/csvs --n_jobs 5
 	
 csv:
 	@python -m data.mixing.audiocaps_csv_mixer --in_csv_dir config/datafiles/csvs --out_csv_dir config/datafiles/csvs
