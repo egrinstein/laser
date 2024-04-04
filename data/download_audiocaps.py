@@ -1,10 +1,13 @@
 import argparse
+import os
 import wget
 
 from audiocaps_download import Downloader
 
 
 def main(out_csv_dir: str, out_wav_dir: str, n_jobs: int = 5):
+    os.makedirs(out_csv_dir, exist_ok=True)
+    os.makedirs(out_wav_dir, exist_ok=True)
 
     print("Downloading the AudioCaps dataset")
     print("1. Downloading the captions")
