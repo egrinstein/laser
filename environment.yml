@@ -19,5 +19,6 @@ dependencies:
       - webdataset
       - pyloudnorm
       - audiocaps-download
+      - h5py
   - torchaudio
   - torchvision

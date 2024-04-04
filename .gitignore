@@ -176,3 +176,4 @@ config/datafiles/audioset_*
 *.e*
 *.o*
 config/datafiles/csvs/
+config/csv/

@@ -11,6 +11,9 @@ conda env create -f environment.yml
 
 Alternatively, you can look at the `environment.yml` file and install the dependencies manually.
 
+### Download the models
+[TODO]
+
 ### Dataset creation
 
 1. Download AudioCaps dataset running the command:

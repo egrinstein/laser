@@ -7,10 +7,10 @@ csv:
 	@python -m data.mixing.audiocaps_csv_mixer --in_csv_dir config/datafiles/csvs --out_csv_dir config/datafiles/csvs
 
 mix:
-	@python -m data.mixing.mix_audiocaps --in_csv_dir config/datafiles/csvs/ --out_json_dir config/datafiles/ --in_wav_dir ~/datasets/audiocaps/ --out_wav_dir ~/datasets/audiocaps/mix
+	@python -m data.audiocaps_csv_mixer --in_csv_dir config/datafiles/csvs/ --out_json_dir config/datafiles/ --in_wav_dir ~/datasets/audiocaps/ --out_wav_dir ~/datasets/audiocaps/mix
 
 embeddings:
-	@python -m data.mixing.create_audiocaps_commands --in_csv_dir config/datafiles/csvs --out_dir ~/datasets/audiocaps/embeddings
+	@python -m data.mixing.create_audiocaps_commands --in_csv_dir config/datafiles/csvs --out_dir ~/datasets/audiocaps/embeddings --mode e2e
 
 add-embeddings-to-json:
 	@python data/add_embeddings_to_audiocaps_json.py --embed_dir ~/datasets/audiocaps/embeddings --json_dir config/datafiles/
