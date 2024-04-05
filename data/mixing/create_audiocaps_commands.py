@@ -10,52 +10,66 @@ import json
 import os
 import pandas as pd
 
-from tqdm import trange
+from tqdm import tqdm
 
+from joblib import Parallel, delayed
 from commander import CommandCreator
 from models.clap_encoder import CLAP_Encoder
 from safetensors.torch import save_file
 
 
-def create_commands(in_csv_path, out_dir_path, mode = "template", use_corrector = True):
+def create_commands(in_csv_path, out_dir_path, mode = "e2e",
+                    use_corrector = True, n_jobs = 1):
     """
 
     Args:
         in_csv_path (str): path to input mix.csv file
         out_dir_path (str): path to output directory where the commands will be saved
         mode (str, optional): "template" will construct the commands from available templates,
-        followed by gramatical correction using deep learning. Conversely, "e2e" will ask a GPT to generate a command. Defaults to "template".
-    """
+        followed by gramatical correction using deep learning. Conversely, "e2e" will ask a GPT to generate a command. Defaults to "template".    """
 
-    command_creator = CommandCreator(mode=mode, use_corrector=use_corrector)
-    encoder = CLAP_Encoder().eval()
 
     os.makedirs(out_dir_path, exist_ok=True)
 
     df = pd.read_csv(in_csv_path)
     
-    for i in trange(len(df)):
-        row = df.iloc[i]
+    command_creator = CommandCreator(mode=mode, use_corrector=use_corrector)
+    encoder = CLAP_Encoder().eval()
+
+    def _process_row(row):
         target_caption = row['caption_target']
         interferer_caption = row['caption_interferer']
-
-        command_text, command_type = command_creator(target_caption, [interferer_caption])
-        command_embedding = encoder(text=[command_text], modality='text')[0]
-        
         out_file_path = os.path.join(
             out_dir_path, f"{row['audiocap_id_target']}_{row['audiocap_id_interferer']}")
+        out_json_path = os.path.join(f"{out_file_path}.json")
+        out_embed_path = os.path.join(f"{out_file_path}.safetensors")
+
+        if os.path.exists(out_json_path) and os.path.exists(out_embed_path):
+            # Skip if the files already exist
+            return
+
+        command_text, command_type = command_creator(target_caption, [interferer_caption])
+        if command_text is None:
+            print(f"Skipping row {row} as command could not be generated")
+            return
+        command_embedding = encoder(text=[command_text], modality='text')[0]
+        # print(f"[{out_file_path}]", command_text)
 
         # Save the command embedding and its text
         save_file( {
             'command': command_embedding,
-        }, f"{out_file_path}.safetensors")
+        }, out_embed_path)
 
-        with open(f"{out_file_path}.json", 'w') as f:
+        with open(out_json_path, 'w') as f:
             json.dump({
                 'command': command_text,
-                'type': command_type
+                'type': command_type,
+                'target_caption': target_caption,
+                'interferer_caption': interferer_caption
             }, f)
 
+    Parallel(n_jobs=n_jobs, require='sharedmem')(
+        delayed(_process_row)(row) for i, row in tqdm(df.iterrows(), total=len(df)))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create AudioCaps commands')
@@ -63,9 +77,11 @@ if __name__ == "__main__":
     parser.add_argument('--out_dir', type=str, help='Path to output directory where the commands will be saved')
     parser.add_argument('--mode', type=str, default='template', help='Mode to create commands. Either "template" or "e2e"')
     parser.add_argument('--dont_use_corrector', action='store_true', help='Use the corrector to generate commands')
+    parser.add_argument('--n_jobs', type=int, default=1, help='Number of parallel jobs to run')
     args = parser.parse_args()
 
     for split in ['train', 'val', 'test']:
         in_csv_path = os.path.join(args.in_csv_dir, f"audiocaps_{split}_mix.csv")
         out_dir_path = os.path.join(args.out_dir, split)
-        create_commands(in_csv_path, out_dir_path, mode=args.mode, use_corrector=not args.dont_use_corrector)
+        create_commands(in_csv_path, out_dir_path, mode=args.mode,
+                        use_corrector=not args.dont_use_corrector, n_jobs=args.n_jobs)
