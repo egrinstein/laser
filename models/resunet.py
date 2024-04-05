@@ -656,7 +656,7 @@ def get_film_meta(module):
 class ResUNet30(nn.Module):
     def __init__(self, input_channels, output_channels, condition_size,
                  only_train_film=True):
-        super(ResUNet30, self).__init__()
+        super().__init__()
 
         self.base = ResUNet30_Base(
             input_channels=input_channels,

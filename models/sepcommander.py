@@ -1,5 +1,6 @@
 import random
 import lightning.pytorch as pl
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torchmetrics.functional.audio import signal_distortion_ratio, scale_invariant_signal_distortion_ratio
@@ -19,7 +20,6 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         learning_rate: float = None,
         lr_lambda_func = None,
         use_text_ratio: float = 1.0,
-        query_augmentation = True
     ):
         r"""Pytorch Lightning wrapper of PyTorch model, including forward,
         optimization of model, etc.
@@ -39,13 +39,16 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.optimizer_type = optimizer_type
         self.learning_rate = learning_rate
         self.lr_lambda_func = lr_lambda_func
-        self.query_augmentation = query_augmentation
 
         # Average will be computed using exponential moving average
         self.avg_sisdr = 0
         self.avg_qsdr = 0
         self.avg_loss = 0
         self.avg_smoothing = 0.01
+
+        for name, param in self.ss_model.named_parameters():
+            if param.requires_grad == False:
+                print(name, np.prod(list(param.shape)))
 
     def forward(self, x):
         pass

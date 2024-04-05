@@ -113,6 +113,7 @@ def train(args) -> NoReturn:
     output_channels = configs['model']['output_channels']
     condition_size = configs['model']['condition_size']
     use_text_ratio = configs['model']['use_text_ratio']
+    only_train_film = configs["model"]["only_train_film"]
     
     # Configuration of the trainer
     num_nodes = configs['train']['num_nodes']
@@ -124,6 +125,7 @@ def train(args) -> NoReturn:
     reduce_lr_steps = configs['train']["optimizer"]['reduce_lr_steps']
     save_step_frequency = configs['train']['save_step_frequency']
     resume_checkpoint_path = configs["train"]["checkpoint_path"]
+    n_epochs = configs["train"]["n_epochs"]
 
     if resume_checkpoint_path == "":
         resume_checkpoint_path = None
@@ -145,6 +147,7 @@ def train(args) -> NoReturn:
         input_channels=input_channels,
         output_channels=output_channels,
         condition_size=condition_size,
+        only_train_film=only_train_film
     )
 
     lr_lambda_func = get_lr_lambda(
@@ -162,7 +165,6 @@ def train(args) -> NoReturn:
         learning_rate=learning_rate,
         lr_lambda_func=lr_lambda_func,
         use_text_ratio=use_text_ratio,
-        query_augmentation=configs['model']['query_augmentation'],
     )
 
     checkpoint_every_n_steps = CheckpointEveryNSteps(
