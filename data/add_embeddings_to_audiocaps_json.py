@@ -8,9 +8,13 @@ def add_embeddings_to_audiocaps_json(json_path, embed_dir):
 
     for data_dict in data["data"]:
         embed_path = os.path.join(embed_dir, os.path.basename(data_dict["wav_mixture"]).replace(".wav", ".safetensors"))
+        json_command_path = embed_path.replace(".safetensors", ".json")
         if os.path.exists(embed_path):
             print(f"Embedding added for {data_dict['wav_mixture']}")
             data_dict["command_embedding"] = embed_path
+            with open(json_command_path, 'r') as f:
+                command_dict = json.load(f)
+                data_dict["command_type"] = command_dict["type"]
 
     with open(json_path, 'w') as f:
         json.dump(data, f, indent=4)

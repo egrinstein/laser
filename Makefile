@@ -17,7 +17,7 @@ add-embeddings-to-json:
 
 train:
 	@PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
-	@python train.py --workspace workspace/AudioSep --config_yaml config/sepcommands_base.yaml --resume_checkpoint_path checkpoint/audiosep_base_4M_steps.ckpt
+	@python train.py --workspace workspace/AudioSep --config_yaml config/sepcommands_base.yaml
 
 eval:
 	@python -m evaluation.evaluate_audiotext_dataset

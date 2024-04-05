@@ -654,7 +654,8 @@ def get_film_meta(module):
 
 
 class ResUNet30(nn.Module):
-    def __init__(self, input_channels, output_channels, condition_size):
+    def __init__(self, input_channels, output_channels, condition_size,
+                 only_train_film=True):
         super(ResUNet30, self).__init__()
 
         self.base = ResUNet30_Base(
@@ -667,6 +668,10 @@ class ResUNet30(nn.Module):
         )
 
         self.film = FiLM(film_meta=self.film_meta, condition_size=condition_size)
+
+        if only_train_film:
+            for param in self.base.parameters():
+                param.requires_grad = False
 
     def forward(self, input_dict):
         mixtures = input_dict["mixture"]

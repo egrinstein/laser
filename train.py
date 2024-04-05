@@ -8,7 +8,7 @@ from typing import List, NoReturn
 from torch.utils.tensorboard import SummaryWriter
 from models.resunet import *
 from models.metrics import get_loss_function
-from models.sepcommander import AudioSep, get_model_class
+from models.sepcommander import AudioSep
 from callbacks.base import CheckpointEveryNSteps
 from models.lr_schedulers import get_lr_lambda
 
@@ -123,7 +123,8 @@ def train(args) -> NoReturn:
     warm_up_steps = configs['train']["optimizer"]['warm_up_steps']
     reduce_lr_steps = configs['train']["optimizer"]['reduce_lr_steps']
     save_step_frequency = configs['train']['save_step_frequency']
-    resume_checkpoint_path = args.resume_checkpoint_path
+    resume_checkpoint_path = configs["train"]["checkpoint_path"]
+
     if resume_checkpoint_path == "":
         resume_checkpoint_path = None
     else:
@@ -140,9 +141,7 @@ def train(args) -> NoReturn:
     data_module = get_data_module(config_yaml)
     
     # model
-    Model = get_model_class(model_type=model_type)
-
-    ss_model = Model(
+    ss_model = ResUNet30(
         input_channels=input_channels,
         output_channels=output_channels,
         condition_size=condition_size,
@@ -222,14 +221,6 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="Path of config file for training.",
-    )
-
-    parser.add_argument(
-        "--resume_checkpoint_path",
-        type=str,
-        required=True,
-        default='',
-        help="Path of pretrained checkpoint for finetuning.",
     )
 
     args = parser.parse_args()

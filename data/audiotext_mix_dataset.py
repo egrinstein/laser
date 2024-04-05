@@ -83,4 +83,7 @@ def _filter_missing_files(data_json):
     print("Missing samples:", len(data_json) - len(filtered_data_json),
           "out of", len(data_json))
 
-    return filtered_data_json 
+    return filtered_data_json
+    
+    # Filter only "positives"
+    #return [data for data in filtered_data_json if data['command_type'] == 'positive']

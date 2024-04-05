@@ -45,7 +45,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.avg_sisdr = 0
         self.avg_qsdr = 0
         self.avg_loss = 0
-        self.avg_smoothing = 0.1
+        self.avg_smoothing = 0.01
 
     def forward(self, x):
         pass
@@ -98,7 +98,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
             if interferers.shape[1] != 1:
                 raise ValueError("Only a single interferer is currently supported.")
             else:
-                interferers = interferers[:, 0]
+                interferers = interferers[:, 0, 0]
             if model_output.device.type == "mps":
                 # SDR calculation is not supported on mps
                 model_output = model_output.cpu()
@@ -108,16 +108,15 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
             # sdr = signal_distortion_ratio(model_output, segments)
             # log_dict[f"{prefix}_sdr"] = sdr.mean()
             
-            # Compute si-sdr
-            sisdr = scale_invariant_signal_distortion_ratio(model_output, segments)
-
-            self.avg_sisdr = self._batch_moving_average(self.avg_sisdr, sisdr)
+            # Compute si-sdr for target
+            target_sisdr = scale_invariant_signal_distortion_ratio(model_output, segments)
+            self.avg_sisdr = self._batch_moving_average(self.avg_sisdr, target_sisdr)
             log_dict[f"{prefix}_sisdr"] = self.avg_sisdr
 
             # Compute q-sdr
-            model_output_tensor = model_output.unsqueeze(1).repeat(1, interferers.size(1), 1)
-            interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output_tensor, interferers)
-            qsdr = (interferer_sisdr > sisdr.unsqueeze(1)).any(dim=1).float()
+            ## Compute si-sdr for interferer
+            interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output, interferers)
+            qsdr = (target_sisdr > interferer_sisdr).float()
             self.avg_qsdr = self._batch_moving_average(self.avg_qsdr, qsdr)
             log_dict[f"{prefix}_qsdr"] = self.avg_qsdr
 
@@ -167,12 +166,3 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
                 self.avg_smoothing * new_value.item()
 
         return current_avg
-
-
-def get_model_class(model_type):
-    if model_type == 'ResUNet30':
-        from models.resunet import ResUNet30
-        return ResUNet30
-
-    else:
-        raise NotImplementedError

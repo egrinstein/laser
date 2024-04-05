@@ -8,7 +8,8 @@ import torch.nn as nn
 import yaml
 
 from models.metrics import get_loss_function
-from models.sepcommander import AudioSep, get_model_class
+from models.sepcommander import AudioSep
+from models.resunet import ResUNet30
 from data.audiotext_dataset import AudioTextDataLoader
 from data.audiotext_mix_dataset import AudioTextMixDataLoader
 from data.datamodules import DataModule
@@ -108,36 +109,6 @@ def repeat_to_length(audio: np.ndarray, segment_samples: int) -> np.ndarray:
     return audio
 
 
-def get_ss_model(config_yaml) -> nn.Module:
-    r"""Load trained universal source separation model.
-
-    Args:
-        configs (Dict)
-        checkpoint_path (str): path of the checkpoint to load
-        device (str): e.g., "cpu" | "cuda"
-
-    Returns:
-        pl_model: pl.LightningModule
-    """
-    configs = parse_yaml(config_yaml)
-
-    ss_model_type = configs["model"]["model_type"]
-    input_channels = configs["model"]["input_channels"]
-    output_channels = configs["model"]["output_channels"]
-    condition_size = configs["model"]["condition_size"]
-    
-    # Initialize separation model
-    SsModel = get_model_class(model_type=ss_model_type)
-
-    ss_model = SsModel(
-        input_channels=input_channels,
-        output_channels=output_channels,
-        condition_size=condition_size,
-    )
-
-    return ss_model
-
-
 def load_ss_model(
     config_yaml: str,
     checkpoint_path: str,
@@ -159,14 +130,15 @@ def load_ss_model(
     input_channels = configs["model"]["input_channels"]
     output_channels = configs["model"]["output_channels"]
     condition_size = configs["model"]["condition_size"]
-    
-    # Initialize separation model
-    SsModel = get_model_class(model_type=ss_model_type)
+    only_train_film = configs["model"]["only_train_film"]
 
-    ss_model = SsModel(
+    # Initialize separation model
+
+    ss_model = ResUNet30(
         input_channels=input_channels,
         output_channels=output_channels,
         condition_size=condition_size,
+        only_train_film=only_train_film
     )
 
     # Load PyTorch Lightning model

@@ -26,6 +26,7 @@ model:
     resume_checkpoint: ""
     use_text_ratio: 1.0
     query_augmentation: true
+    only_train_film: false
 
 train:
     optimizer:
@@ -44,6 +45,7 @@ train:
     save_step_frequency: 20000  # Save every #save_step_frequency steps.
     early_stop_steps: 10000001
     random_seed: 1234
+    checkpoint_path: null #checkpoint/audiosep_base_4M_steps.ckpt
 
 accelerator: gpu
 device: null
