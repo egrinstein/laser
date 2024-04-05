@@ -45,5 +45,5 @@ train:
     early_stop_steps: 10000001
     random_seed: 1234
 
-accelerator: mps
+accelerator: gpu
 device: null

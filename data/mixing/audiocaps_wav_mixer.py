@@ -22,12 +22,15 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
                      sr=32000):
     # Read the csv file
     df = pd.read_csv(csv_file)
+    df = df.sort_values(by='audiocap_id_target')
+
     data = []
 
     waveform_mixer = WaveformMixer()
     os.makedirs(mix_wav_path, exist_ok=True)
 
-    for index, row in tqdm(df.iterrows()):
+    n_found = n_not_found = 0
+    for index, row in tqdm(df.iterrows(), total=len(df)):
         # Create the dictionary
         path_target = os.path.join(
                 audiocaps_wav_path, f"{row['audiocap_id_target']}.wav")
@@ -44,10 +47,16 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
                 mix_wav_path,
                 f"{row['audiocap_id_interferer']}.wav")
 
-        if not os.path.exists(path_target) or not os.path.exists(path_interferer):
-            print(f"Skipping row {index} as wav file not found")
+        if not os.path.exists(path_target):
+            print(f"{row['audiocap_id_target']} wav file not found {n_found}/{n_not_found}")
+            n_not_found +=1
             continue
-        
+        if not os.path.exists(path_interferer):
+            print(f"{row['audiocap_id_interferer']} wav file not found {n_found}/{n_not_found}")
+            n_not_found += 1
+            continue
+
+        n_found += 1
         data_dict = {
             "wav_mixture": out_mix_path,
             "wav_target": out_target_path,
@@ -57,9 +66,9 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
         }
         data.append(data_dict)
 
-        # if os.path.exists(out_mix_path):
-        #     print(f"Skipping row {index} as mix wav file already exists")
-        #     continue
+        if os.path.exists(out_mix_path):
+            # print(f"Skipping row {index} as mix wav file already exists")
+            continue
 
         wav_target = _load_audio(path_target, sr)
         wav_interferer = _load_audio(path_interferer, sr)

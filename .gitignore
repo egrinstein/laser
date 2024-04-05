@@ -162,6 +162,7 @@ cython_debug/
 # Project specific
 checkpoint/
 
+__MACOSX/
 *.DS_Store
 analyze.ipynb
 data/audioset/

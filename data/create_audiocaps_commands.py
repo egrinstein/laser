@@ -71,6 +71,7 @@ def create_commands(in_csv_path, out_dir_path, mode = "e2e",
     Parallel(n_jobs=n_jobs, require='sharedmem')(
         delayed(_process_row)(row) for i, row in tqdm(df.iterrows(), total=len(df)))
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create AudioCaps commands')
     parser.add_argument('--in_csv_dir', type=str, help='Path to input mix.csv files (train, val, test)')

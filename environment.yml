@@ -20,5 +20,6 @@ dependencies:
       - pyloudnorm
       - audiocaps-download
       - h5py
+      - openai
   - torchaudio
   - torchvision

@@ -60,7 +60,7 @@ class AudioTextDatasetEvaluator:
 
         sisdrs_dict = {}
         sdris_dict = {}
-        pums_dict = {}
+        qsdrs_dict = {}
         
         print(f'Evaluation on {self.dataset.datafiles} with [text label] queries.')
         device = pl_model.device
@@ -98,15 +98,15 @@ class AudioTextDatasetEvaluator:
             sdri = sdr - sdr_no_sep
             sisdr = calculate_sisdr(ref=source, est=sep_segment)
 
-            pum = 1.
+            qsdr = 1.
             for interferer in interferers:
                 if calculate_sisdr(ref=interferer, est=sep_segment) > sisdr:
-                    pum = 0.
+                    qsdr = 0.
                     break
 
             sisdrs_dict[class_id].append(sisdr)
             sdris_dict[class_id].append(sdri)
-            pums_dict[class_id].append(pum)
+            qsdrs_dict[class_id].append(qsdr)
 
             # Update tqdm progress bar
             pbar.set_postfix(
@@ -114,28 +114,28 @@ class AudioTextDatasetEvaluator:
                     "class_id": class_id,
                     "SI-SDR": np.nanmedian(sisdrs_dict[class_id]),
                     "SDR": np.nanmedian(sdris_dict[class_id]),
-                    "PUM": np.nanmean(pums_dict[class_id]),
+                    "Q-SDR": np.nanmean(qsdrs_dict[class_id]),
                 }
             )
 
         stats_dict = {
             "sisdrs_dict": sisdrs_dict,
             "sdris_dict": sdris_dict,
-            "pums_dict": pums_dict,
+            "qsdrs_dict": qsdrs_dict,
         }
 
         if average:
             median_sdris = {}
             median_sisdrs = {}
-            median_pums = {}
+            median_qsdrs = {}
 
             for class_id in range(527):
                 median_sdris[class_id] = np.nanmedian(stats_dict["sdris_dict"][class_id])
                 median_sisdrs[class_id] = np.nanmedian(stats_dict["sisdrs_dict"][class_id])
-                median_pums[class_id] = np.nanmean(stats_dict["pums_dict"][class_id])
+                median_qsdrs[class_id] = np.nanmean(stats_dict["qsdrs_dict"][class_id])
             stats_dict["sdris_dict"] = get_mean_from_dict_values(median_sdris)
             stats_dict["sisdrs_dict"] = get_mean_from_dict_values(median_sisdrs)
-            stats_dict["pums_dict"] = get_mean_from_dict_values(median_pums)
+            stats_dict["qsdrs_dict"] = get_mean_from_dict_values(median_qsdrs)
 
         return stats_dict
 

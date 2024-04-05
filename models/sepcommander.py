@@ -41,6 +41,12 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.lr_lambda_func = lr_lambda_func
         self.query_augmentation = query_augmentation
 
+        # Average will be computed using exponential moving average
+        self.avg_sisdr = 0
+        self.avg_qsdr = 0
+        self.avg_loss = 0
+        self.avg_smoothing = 0.1
+
     def forward(self, x):
         pass
 
@@ -81,8 +87,10 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         # Calculate loss
         loss = self.loss_function(output_dict, target_dict)
-
-        log_dict = {f"{prefix}_loss": loss}
+        self.avg_loss = (1 - self.avg_smoothing) * self.avg_loss + \
+                self.avg_smoothing * loss.item()
+        
+        log_dict = {f"{prefix}_loss": self.avg_loss}
         
         if compute_sdr and batch_idx % sdr_freq == 0: # Modify this to control the frequency of metrics computation            
             interferers = target_dict['interferers']
@@ -97,16 +105,21 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
                 segments = segments.cpu()
                 interferers = interferers.cpu()
 
-            sdr = signal_distortion_ratio(model_output, segments)
+            # sdr = signal_distortion_ratio(model_output, segments)
+            # log_dict[f"{prefix}_sdr"] = sdr.mean()
+            
+            # Compute si-sdr
             sisdr = scale_invariant_signal_distortion_ratio(model_output, segments)
 
+            self.avg_sisdr = self._batch_moving_average(self.avg_sisdr, sisdr)
+            log_dict[f"{prefix}_sisdr"] = self.avg_sisdr
+
+            # Compute q-sdr
             model_output_tensor = model_output.unsqueeze(1).repeat(1, interferers.size(1), 1)
             interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output_tensor, interferers)
-            pum = (interferer_sisdr > sisdr.unsqueeze(1)).any(dim=1).float()
-
-            log_dict[f"{prefix}_sdr"] = sdr.mean()
-            log_dict[f"{prefix}_sisdr"] = sisdr.mean()
-            log_dict[f"{prefix}_pum"] = pum.mean()
+            qsdr = (interferer_sisdr > sisdr.unsqueeze(1)).any(dim=1).float()
+            self.avg_qsdr = self._batch_moving_average(self.avg_qsdr, qsdr)
+            log_dict[f"{prefix}_qsdr"] = self.avg_qsdr
 
         self.log_dict(log_dict, prog_bar=True)
         
@@ -148,6 +161,13 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         return output_dict
     
+    def _batch_moving_average(self, current_avg, new_batch_values):
+        for new_value in new_batch_values:
+            current_avg = (1 - self.avg_smoothing) * current_avg + \
+                self.avg_smoothing * new_value.item()
+
+        return current_avg
+
 
 def get_model_class(model_type):
     if model_type == 'ResUNet30':

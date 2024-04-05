@@ -17,7 +17,7 @@ class AudioTextMixDataset(Dataset):
             with open(datafile, 'r') as fp:
                 data_json = json.load(fp)['data']
                 all_data_json.extend(data_json)
-        self.all_data_json = all_data_json
+        self.all_data_json = _filter_missing_files(all_data_json)
 
         self.sampling_rate = sampling_rate
 
@@ -69,3 +69,18 @@ class AudioTextMixDataLoader(DataLoader):
         )
 
         super().__init__(self._dataset, *args, **kwargs)
+
+
+def _filter_missing_files(data_json):
+    filtered_data_json = []
+
+    for sample in data_json:
+        if 'command_embedding' not in sample or 'wav_mixture' not in sample: 
+            continue
+        else:
+            filtered_data_json.append(sample)
+
+    print("Missing samples:", len(data_json) - len(filtered_data_json),
+          "out of", len(data_json))
+
+    return filtered_data_json 
