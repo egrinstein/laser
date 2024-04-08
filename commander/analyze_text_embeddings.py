@@ -4,7 +4,7 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 
-from models.clap_encoder import CLAP_Encoder
+from models.clap_encoder import ClapEncoder
 
 # First 5 should keep the signal, last 5 should remove the signal
 EXAMPLE_QUERIES = [
@@ -40,7 +40,7 @@ EXAMPLE_QUERIES = [
 
 class ClapDistance:
     def __init__(self) -> None:
-        self.clap_encoder = CLAP_Encoder().eval()
+        self.clap_encoder = ClapEncoder().eval()
         
     def __call__(self, query1, query2):
         query_embeddings = self.clap_encoder(
@@ -56,7 +56,7 @@ class ClapDistance:
 def main(queries):
     # 1. Load the model
     print("Loading the query encoder (CLAP)...")
-    query_encoder = CLAP_Encoder().eval()
+    query_encoder = ClapEncoder().eval()
 
     # 2. Get the query embeddings
     print("Getting the query embeddings...")

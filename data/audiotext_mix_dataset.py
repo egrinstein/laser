@@ -37,23 +37,27 @@ class AudioTextMixDataset(Dataset):
         return audio_data, audio_rate
 
     def __getitem__(self, index):
-        # create a audio tensor  
-        mix_audio_data, audio_rate = self._read_audio(self.all_data_json[index]['wav_mixture'])
-        target_audio_data, audio_rate = self._read_audio(self.all_data_json[index]['wav_target'])
-        interferer_audio_data, audio_rate = self._read_audio(self.all_data_json[index]['wav_interferer'])
-
-        embeddings_path = self.all_data_json[index]['command_embedding']
-
+        # create a audio tensor
+        sample = self.all_data_json[index]
+        mix_audio_data, audio_rate = self._read_audio(sample['wav_mixture'])
+        target_audio_data, audio_rate = self._read_audio(sample['wav_target'])
+        interferer_audio_data, audio_rate = self._read_audio(sample['wav_interferer'])
+        
         out_dict = {
             'input': {
                 'mixture': mix_audio_data.squeeze(1),
-                'condition': load_file(embeddings_path)['command'],
+                
+                'caption_target': sample['caption_target'],
             },
             'target': {
                 'interferers': interferer_audio_data,
                 'segment': target_audio_data.squeeze(),
             }
         }
+
+        if 'command_embedding' in sample:
+            out_dict['input']['condition'] = load_file(
+                sample['command_embedding'])['command']
 
         return out_dict
 
@@ -75,15 +79,13 @@ def _filter_missing_files(data_json, mode='all'):
     filtered_data_json = []
 
     for sample in data_json:
-        if 'command_embedding' not in sample or 'wav_mixture' not in sample: 
+        if 'wav_mixture' not in sample: 
             continue
         else:
             filtered_data_json.append(sample)
 
     print("Missing samples:", len(data_json) - len(filtered_data_json),
           "out of", len(data_json))
-
-    return filtered_data_json
     
     # Filter by mode
     if mode == 'positive':
@@ -92,3 +94,5 @@ def _filter_missing_files(data_json, mode='all'):
         return [data for data in filtered_data_json if data['command_type'] == 'negative']
     elif mode == 'remove_mixed':
         return [data for data in filtered_data_json if data['command_type'] != 'mixed']
+    else:
+        return filtered_data_json

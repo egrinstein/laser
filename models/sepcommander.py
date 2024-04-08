@@ -1,9 +1,8 @@
 import random
 import lightning.pytorch as pl
-import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-from torchmetrics.functional.audio import signal_distortion_ratio, scale_invariant_signal_distortion_ratio
+from torchmetrics.functional.audio import scale_invariant_signal_distortion_ratio
 
 from huggingface_hub import PyTorchModelHubMixin
 from torch.optim.lr_scheduler import LambdaLR
@@ -19,7 +18,6 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         optimizer_type: str = None,
         learning_rate: float = None,
         lr_lambda_func = None,
-        use_text_ratio: float = 1.0,
     ):
         r"""Pytorch Lightning wrapper of PyTorch model, including forward,
         optimization of model, etc.
@@ -34,7 +32,6 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         super().__init__()
         self.ss_model = ss_model
-        self.use_text_ratio = use_text_ratio
         self.loss_function = loss_function
         self.optimizer_type = optimizer_type
         self.learning_rate = learning_rate
@@ -45,10 +42,6 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.avg_qsdr = 0
         self.avg_loss = 0
         self.avg_smoothing = 0.01
-
-        for name, param in self.ss_model.named_parameters():
-            if param.requires_grad == False:
-                print(name, np.prod(list(param.shape)))
 
     def forward(self, x):
         pass

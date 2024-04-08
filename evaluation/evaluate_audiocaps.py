@@ -11,7 +11,7 @@ from tqdm import tqdm
 import pathlib
 import librosa
 import lightning.pytorch as pl
-from models.clap_encoder import CLAP_Encoder
+from models.clap_encoder import ClapEncoder
 
 sys.path.append('../AudioSep/')
 from models.metrics import (

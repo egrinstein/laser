@@ -8,7 +8,7 @@ from models.CLAP.training.data import get_audio_features
 from transformers import RobertaTokenizer
 
 
-class CLAP_Encoder(nn.Module):
+class ClapEncoder(nn.Module):
     def __init__(
         self,
         pretrained_path='checkpoint/music_speech_audioset_epoch_15_esc_89.98.pt',
@@ -87,21 +87,8 @@ class CLAP_Encoder(nn.Module):
         
         return embed.detach()
 
-
-    def __call__(self, modality, audio=None, text=None, use_text_ratio=1):
-        if modality == 'audio':
-            embed = self._get_audio_embed(audio)
-        elif modality == 'text':
-            embed = self._get_text_embed(text)
-        elif modality == 'hybrid':
-            if random.random() > use_text_ratio:
-                embed = self._get_audio_embed(audio)
-            else:
-                embed = self._get_text_embed(text)
-        else:
-            raise NotImplementedError("Please check flag 'training_modality'.")
-
-        return embed.float()
+    def __call__(self, text):
+        return self._get_text_embed(text).float()
 
     def tokenizer(self, text):
         result = self.tokenize(

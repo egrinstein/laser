@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from commander import random_template_command
 from data.mixing.waveform_mixer import WaveformMixer
-from models.clap_encoder import CLAP_Encoder
+from models.clap_encoder import ClapEncoder
 
 
 class AudioTextDataset(Dataset):
@@ -118,7 +118,7 @@ class AudioTextDataLoader(DataLoader):
             higher_db=higher_db
         )
 
-        self.query_encoder = CLAP_Encoder().eval().to(device)
+        self.query_encoder = ClapEncoder().eval().to(device)
 
 
         self.device = device

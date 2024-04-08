@@ -14,12 +14,14 @@ from tqdm import tqdm
 
 from joblib import Parallel, delayed
 from commander import CommandCreator
-from models.clap_encoder import CLAP_Encoder
+from models.clap_encoder import ClapEncoder
+from models.bert_encoder import BertEncoder
 from safetensors.torch import save_file
 
 
 def create_commands(in_csv_path, out_dir_path, mode = "e2e",
-                    use_corrector = True, n_jobs = 1):
+                    encoder='bert', use_corrector = True, n_jobs = 1,
+                    re_encode = True):
     """
 
     Args:
@@ -34,7 +36,11 @@ def create_commands(in_csv_path, out_dir_path, mode = "e2e",
     df = pd.read_csv(in_csv_path)
     
     command_creator = CommandCreator(mode=mode, use_corrector=use_corrector)
-    encoder = CLAP_Encoder().eval()
+    
+    if encoder == 'bert':
+        encoder = BertEncoder().eval()
+    elif encoder == 'clap':
+        encoder = ClapEncoder().eval()
 
     def _process_row(row):
         target_caption = row['caption_target']
@@ -44,15 +50,26 @@ def create_commands(in_csv_path, out_dir_path, mode = "e2e",
         out_json_path = os.path.join(f"{out_file_path}.json")
         out_embed_path = os.path.join(f"{out_file_path}.safetensors")
 
-        if os.path.exists(out_json_path) and os.path.exists(out_embed_path):
-            # Skip if the files already exist
-            return
+        if os.path.exists(out_json_path):
+            json_data = json.load(open(out_json_path))
+            command_text = json_data['command']
+            command_type = json_data['type']
 
-        command_text, command_type = command_creator(target_caption, [interferer_caption])
+            if os.path.exists(out_embed_path):
+                if not re_encode:
+                    # Skip if the files already exist
+                    return
+                else:
+                    print(f"Re-encoding {out_embed_path}")
+        else:
+            command_text, command_type = command_creator(
+                target_caption, [interferer_caption])
+            
         if command_text is None:
             print(f"Skipping row {row} as command could not be generated")
             return
-        command_embedding = encoder(text=[command_text], modality='text')[0]
+
+        command_embedding = encoder([command_text])[0]
         # print(f"[{out_file_path}]", command_text)
 
         # Save the command embedding and its text
@@ -81,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_jobs', type=int, default=1, help='Number of parallel jobs to run')
     args = parser.parse_args()
 
-    for split in ['train', 'val', 'test']:
+    for split in ['train', 'test', 'val']:
         in_csv_path = os.path.join(args.in_csv_dir, f"audiocaps_{split}_mix.csv")
         out_dir_path = os.path.join(args.out_dir, split)
         create_commands(in_csv_path, out_dir_path, mode=args.mode,

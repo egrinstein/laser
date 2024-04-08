@@ -14,12 +14,12 @@ import torch
 
 from tqdm import trange
 
-from models.clap_encoder import CLAP_Encoder
+from models.clap_encoder import ClapEncoder
 
 
 class ClapSimilarity:
     def __init__(self) -> None:
-        self.clap_encoder = CLAP_Encoder().eval()
+        self.clap_encoder = ClapEncoder().eval()
         
     def __call__(self, query1, query2):
         query_embeddings = self.clap_encoder(

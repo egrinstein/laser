@@ -8,7 +8,7 @@ from evaluation.evaluate_vggsound import VGGSoundEvaluator
 from evaluation.evaluate_music import MUSICEvaluator
 from evaluation.evaluate_esc50 import ESC50Evaluator
 from evaluation.evaluate_clotho import ClothoEvaluator
-from models.clap_encoder import CLAP_Encoder
+from models.clap_encoder import ClapEncoder
 
 from utils import (
     load_ss_model,
@@ -26,7 +26,7 @@ def eval(checkpoint_path, config_yaml='config/audiosep_base.yaml'):
     configs = parse_yaml(config_yaml)
     
     # Load model
-    query_encoder = CLAP_Encoder().eval()
+    query_encoder = ClapEncoder().eval()
 
     pl_model = load_ss_model(
         config_yaml,

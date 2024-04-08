@@ -1,12 +1,14 @@
 import argparse
+import lightning.pytorch as pl
 import logging
+import torch
 import os
 import pathlib
-import lightning.pytorch as pl
 
 from typing import List, NoReturn
 from torch.utils.tensorboard import SummaryWriter
-from models.resunet import *
+from models.resunet import ResUNet30
+from models.lassnet import UNetRes_FiLM
 from models.metrics import get_loss_function
 from models.sepcommander import AudioSep
 from callbacks.base import CheckpointEveryNSteps
@@ -101,18 +103,11 @@ def train(args) -> NoReturn:
     # Read config file.
     configs = parse_yaml(config_yaml)
 
-    # Configuration of data
-    max_mix_num = configs['data']['max_mix_num']
-    lower_db = configs['data']['loudness_norm']['lower_db']
-    higher_db = configs['data']['loudness_norm']['higher_db']
-
     # Configuration of the separation model
-    query_net = configs['model']['query_net']
-    model_type = configs['model']['model_type']
+    backbone = configs['model']['backbone']
     input_channels = configs['model']['input_channels']
     output_channels = configs['model']['output_channels']
     condition_size = configs['model']['condition_size']
-    use_text_ratio = configs['model']['use_text_ratio']
     only_train_film = configs["model"]["only_train_film"]
     
     # Configuration of the trainer
@@ -143,12 +138,20 @@ def train(args) -> NoReturn:
     data_module = get_data_module(config_yaml)
     
     # model
-    ss_model = ResUNet30(
-        input_channels=input_channels,
-        output_channels=output_channels,
-        condition_size=condition_size,
-        only_train_film=only_train_film
-    )
+    if backbone == 'resunet30':
+        ss_model = ResUNet30(
+            input_channels=input_channels,
+            output_channels=output_channels,
+            condition_size=condition_size,
+            only_train_film=only_train_film
+        )
+    elif backbone == 'lassnet':
+        ss_model = UNetRes_FiLM(
+            channels=input_channels,
+            cond_embedding_dim=condition_size,
+            nsrc=output_channels)
+    else:
+        raise ValueError(f"Unknown backbone [{backbone}]")
 
     lr_lambda_func = get_lr_lambda(
         lr_lambda_type=lr_lambda_type,
@@ -164,7 +167,6 @@ def train(args) -> NoReturn:
         optimizer_type=optimizer_type,
         learning_rate=learning_rate,
         lr_lambda_func=lr_lambda_func,
-        use_text_ratio=use_text_ratio,
     )
 
     checkpoint_every_n_steps = CheckpointEveryNSteps(
@@ -200,8 +202,15 @@ def train(args) -> NoReturn:
 
     # Load checkpoint resume_checkpoint_path
     if resume_checkpoint_path is not None:
-        weights = torch.load(resume_checkpoint_path, map_location=torch.device('cpu'))
-        pl_model.load_state_dict(weights['state_dict'], strict=False)
+        weights = torch.load(
+            resume_checkpoint_path, map_location=torch.device('cpu'))['model']
+        new_weights = {}
+        for k, v in weights.items():
+            if 'text_embedder.' in k:
+                continue
+            new_weights[k.replace('module.', 'ss_model.').replace('.UNet', '')] = v
+        weights = new_weights
+        pl_model.load_state_dict(weights, strict=True)
         logging.info(f'Loaded checkpoint from [{resume_checkpoint_path}]')
 
     trainer.fit(

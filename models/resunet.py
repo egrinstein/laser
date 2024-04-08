@@ -21,7 +21,6 @@ class FiLM(nn.Module):
         )
 
     def create_film_modules(self, film_meta, ancestor_names):
-
         modules = {}
 
         # Pre-order traversal of modules
@@ -48,7 +47,6 @@ class FiLM(nn.Module):
         return modules, ancestor_names
 
     def add_film_layer_to_module(self, num_features, unique_module_name):
-
         layer = nn.Linear(self.condition_size, num_features)
         init_layer(layer)
         self.add_module(name=unique_module_name, module=layer)
@@ -276,7 +274,7 @@ class DecoderBlockRes1B(nn.Module):
 
 class ResUNet30_Base(nn.Module, Base):
     def __init__(self, input_channels, output_channels):
-        super(ResUNet30_Base, self).__init__()
+        super().__init__()
 
         window_size = 2048
         hop_size = 320
@@ -669,9 +667,9 @@ class ResUNet30(nn.Module):
 
         self.film = FiLM(film_meta=self.film_meta, condition_size=condition_size)
 
-        if only_train_film:
-            for param in self.base.parameters():
-                param.requires_grad = False
+        _disable_params(self.base)
+        _disable_params(self.film)
+
 
     def forward(self, input_dict):
         mixtures = input_dict["mixture"]
@@ -746,3 +744,12 @@ class ResUNet30(nn.Module):
                 ]
 
         return out_np
+
+
+def _disable_params(model):
+    for name, param in model.named_parameters():
+        if name is None or "->" not in name:
+            param.requires_grad = False
+            print("Disabling ", name)
+        else:
+            print("Enabled ", name, "# params: ", np.prod(list(param.shape)))
