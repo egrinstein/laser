@@ -71,7 +71,7 @@ class AudioTextMixDataLoader(DataLoader):
         super().__init__(self._dataset, *args, **kwargs)
 
 
-def _filter_missing_files(data_json):
+def _filter_missing_files(data_json, mode='all'):
     filtered_data_json = []
 
     for sample in data_json:
@@ -85,5 +85,10 @@ def _filter_missing_files(data_json):
 
     return filtered_data_json
     
-    # Filter only "positives"
-    #return [data for data in filtered_data_json if data['command_type'] == 'positive']
+    # Filter by mode
+    if mode == 'positive':
+        return [data for data in filtered_data_json if data['command_type'] == 'positive']
+    elif mode == 'negative':
+        return [data for data in filtered_data_json if data['command_type'] == 'negative']
+    elif mode == 'remove_mixed':
+        return [data for data in filtered_data_json if data['command_type'] != 'mixed']

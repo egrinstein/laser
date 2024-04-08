@@ -40,9 +40,9 @@ train:
     loss_type: l1_wav
     sync_batchnorm: True
     batch_size_per_device: 6
-    save_step_frequency: 20000  # Save every #save_step_frequency steps.
-    checkpoint_path: null #checkpoint/audiosep_base_4M_steps.ckpt
-    n_epochs: 5
+    save_step_frequency: 3000  # Save every #save_step_frequency steps.
+    checkpoint_path: checkpoint/audiosep_base_4M_steps.ckpt
+    n_epochs: 7
 
 accelerator: gpu
 device: null
