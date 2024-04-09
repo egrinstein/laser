@@ -10,7 +10,7 @@ data:
         - 'config/datafiles/audiocaps_test_mix.json'
 
     sampling_rate: 32000
-    segment_seconds: 5
+    segment_seconds: 10
     loudness_norm:
         lower_db: -10
         higher_db: 10
@@ -19,7 +19,7 @@ data:
 
 model:
     query_net: CLAP
-    condition_size: 512
+    condition_size: 256
     use_text_ratio: 1.0
 
     model_type: ResUNet30
@@ -41,7 +41,7 @@ train:
     sync_batchnorm: True
     batch_size_per_device: 6
     save_step_frequency: 3000  # Save every #save_step_frequency steps.
-    checkpoint_path: checkpoint/audiosep_base_4M_steps.ckpt # workspace/AudioSep/checkpoints/train/sepcommands_base,devices=1/step=18000_no_pretrain.ckpt
+    checkpoint_path: null # checkpoint/audiosep_base_4M_steps.ckpt # workspace/AudioSep/checkpoints/train/sepcommands_base,devices=1/step=18000_no_pretrain.ckpt
     n_epochs: 10
 
 accelerator: gpu

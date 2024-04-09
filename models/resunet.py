@@ -154,6 +154,7 @@ class ConvBlockRes(nn.Module):
         b1 = film_dict["beta1"]
         b2 = film_dict["beta2"]
 
+        breakpoint()
         x = self.conv1(F.leaky_relu_(self.bn1(input_tensor) + b1, negative_slope=0.01))
         x = self.conv2(F.leaky_relu_(self.bn2(x) + b2, negative_slope=0.01))
 
