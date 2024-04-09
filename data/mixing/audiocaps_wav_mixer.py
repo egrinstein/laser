@@ -20,12 +20,10 @@ from data.mixing.waveform_mixer import WaveformMixer
 
 
 def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
-                     sr=32000, skip_existing=False, n_jobs=5):
+                     sr=32000, skip_existing=True, n_jobs=5):
     # Read the csv file
     df = pd.read_csv(csv_file)
     df = df.sort_values(by='audiocap_id_target')
-
-    data = []
 
     waveform_mixer = WaveformMixer()
     os.makedirs(mix_wav_path, exist_ok=True)
@@ -50,27 +48,26 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
                 f"{row['audiocap_id_interferer']}.wav")
 
         if not os.path.exists(path_target):
-            #print(f"{row['audiocap_id_target']} wav file not found {n_found}/{n_not_found}")
+            #print(f"{row['audiocap_id_target']} wav file not found") # {n_found}/{n_not_found}")
             # n_not_found +=1
-            return
+            return None
         if not os.path.exists(path_interferer):
-            #print(f"{row['audiocap_id_interferer']} wav file not found {n_found}/{n_not_found}")
+            #print(f"{row['audiocap_id_interferer']} wav file not found")# {n_found}/{n_not_found}")
             #n_not_found += 1
-            return
+            return None
 
         #n_found += 1
-        data_dict = {
+
+        out = {
             "wav_mixture": out_mix_path,
             "wav_target": out_target_path,
             "wav_interferer": out_interferer_path,
             "caption_target": row["caption_target"],
             "caption_interferer": row["caption_interferer"],
         }
-        data.append(data_dict)
-
         if os.path.exists(out_mix_path) and skip_existing:
             # print(f"Skipping row {index} as mix wav file already exists")
-            return
+            return out
 
         wav_target = _load_audio(path_target, sr)
         wav_interferer = _load_audio(path_interferer, sr)
@@ -85,13 +82,15 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
         torchaudio.save(out_target_path, target, sr)
         torchaudio.save(out_interferer_path, interferers[0], sr)
 
-    Parallel(n_jobs=n_jobs)(
+        return out
+
+    results = Parallel(n_jobs=n_jobs)(
         delayed(_mix)(row) for i, row in tqdm(df.iterrows(), total=len(df)))
 
     # Write the dictionary to a json file
     with open(output_json, 'w') as f:
-        json.dump({ "data": data}, f, indent=4)
-    
+        json.dump({ "data": [r for r in results if r is not None]}, f, indent=4)
+
     print(f"Template json file created at {output_json}")
 
 

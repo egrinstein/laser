@@ -57,6 +57,8 @@ class AudioTextMixDataset(Dataset):
         if 'command_embedding' in sample:
             out_dict['input']['condition'] = load_file(
                 sample['command_embedding'])['command']
+        else:
+            print(sample['wav_mixture'])
 
         return out_dict
 

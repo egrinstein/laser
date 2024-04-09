@@ -39,7 +39,7 @@ train:
     sync_batchnorm: True
     batch_size_per_device: 6
     save_step_frequency: 3000  # Save every #save_step_frequency steps.
-    checkpoint_path: workspace/AudioSep/checkpoints/train/sepcommands_base,devices=1/step=6000_lassnet.ckpt
+    checkpoint_path: checkpoint/LASSNet.pt
     n_epochs: 7
 
 accelerator: cuda

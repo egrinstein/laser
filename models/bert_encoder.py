@@ -25,7 +25,8 @@ class BertEncoder(nn.Module):
         self.linear_layer = nn.Sequential(nn.Linear(dim, dim), nn.ReLU(inplace=True))
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+        self.to(self.device)
+        
         self.add_start_token = add_start_token
 
     def tokenize(self, caption):
