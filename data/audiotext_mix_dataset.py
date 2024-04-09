@@ -10,14 +10,14 @@ class AudioTextMixDataset(Dataset):
     """Can sample data from audio-text-mix databases"""
     def __init__(
         self,
-        datafiles, sampling_rate=32000,
+        datafiles, sampling_rate=32000, filter_mode='only_positive'
     ):
         all_data_json = []
         for datafile in datafiles:
             with open(datafile, 'r') as fp:
                 data_json = json.load(fp)['data']
                 all_data_json.extend(data_json)
-        self.all_data_json = _filter_missing_files(all_data_json)
+        self.all_data_json = _filter_files(all_data_json, filter_mode)
 
         self.sampling_rate = sampling_rate
 
@@ -71,7 +71,7 @@ class AudioTextMixDataLoader(DataLoader):
         super().__init__(self._dataset, *args, **kwargs)
 
 
-def _filter_missing_files(data_json, mode='all'):
+def _filter_files(data_json, mode='all'):
     filtered_data_json = []
 
     for sample in data_json:
@@ -86,9 +86,11 @@ def _filter_missing_files(data_json, mode='all'):
     return filtered_data_json
     
     # Filter by mode
-    if mode == 'positive':
+    if mode == 'only_positive':
         return [data for data in filtered_data_json if data['command_type'] == 'positive']
-    elif mode == 'negative':
+    elif mode == 'only_negative':
         return [data for data in filtered_data_json if data['command_type'] == 'negative']
     elif mode == 'remove_mixed':
         return [data for data in filtered_data_json if data['command_type'] != 'mixed']
+    elif mode != 'all':
+        raise ValueError('Invalid dataset filtering parameter')

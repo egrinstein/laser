@@ -200,8 +200,13 @@ def train(args) -> NoReturn:
 
     # Load checkpoint resume_checkpoint_path
     if resume_checkpoint_path is not None:
-        weights = torch.load(resume_checkpoint_path, map_location=torch.device('cpu'))
-        pl_model.load_state_dict(weights['state_dict'], strict=False)
+        weights = torch.load(resume_checkpoint_path, map_location=torch.device('cpu'))['state_dict']
+        new_weights = {}
+        for key, value in weights.items():
+            if not key.startswith('query_encoder'):
+                new_weights[key] = value
+        weights = new_weights
+        pl_model.load_state_dict(weights, strict=True)
         logging.info(f'Loaded checkpoint from [{resume_checkpoint_path}]')
 
     trainer.fit(

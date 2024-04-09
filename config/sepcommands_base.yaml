@@ -26,7 +26,7 @@ model:
     input_channels: 1
     output_channels: 1
     resume_checkpoint: ""
-    only_train_film: false
+    only_train_film: true
 
 train:
     optimizer:
@@ -41,8 +41,8 @@ train:
     sync_batchnorm: True
     batch_size_per_device: 6
     save_step_frequency: 3000  # Save every #save_step_frequency steps.
-    checkpoint_path: checkpoint/audiosep_base_4M_steps.ckpt
-    n_epochs: 7
+    checkpoint_path: checkpoint/audiosep_base_4M_steps.ckpt # workspace/AudioSep/checkpoints/train/sepcommands_base,devices=1/step=18000_no_pretrain.ckpt
+    n_epochs: 10
 
 accelerator: gpu
 device: null

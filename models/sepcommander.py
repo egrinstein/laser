@@ -46,10 +46,6 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.avg_loss = 0
         self.avg_smoothing = 0.01
 
-        for name, param in self.ss_model.named_parameters():
-            if param.requires_grad == False:
-                print(name, np.prod(list(param.shape)))
-
     def forward(self, x):
         pass
 

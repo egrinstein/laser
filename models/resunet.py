@@ -48,11 +48,10 @@ class FiLM(nn.Module):
         return modules, ancestor_names
 
     def add_film_layer_to_module(self, num_features, unique_module_name):
-
         layer = nn.Linear(self.condition_size, num_features)
         init_layer(layer)
         self.add_module(name=unique_module_name, module=layer)
-
+        
         return layer
 
     def forward(self, conditions):
