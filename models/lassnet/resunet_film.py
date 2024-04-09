@@ -7,6 +7,10 @@ class UNetRes_FiLM(nn.Module):
         activation = 'relu'
         momentum = 0.01
 
+        self.n_fft = 1024
+        self.hop_length = 512
+        self.win_length = self.n_fft
+
         self.nsrc = nsrc
         self.channels = channels
         self.downsample_ratio = 2 ** 6  # This number equals 2^{#encoder_blocks}
@@ -70,8 +74,8 @@ class UNetRes_FiLM(nn.Module):
         if device.type == 'mps':
             input = input.to('cpu')
     
-        result = torch.stft(input, n_fft=1024, hop_length=512,
-                            win_length=1024,
+        result = torch.stft(input, n_fft=self.n_fft, hop_length=self.hop_length,
+                            win_length=self.win_length,
                             window=self.stft_window.to(input.device),
                             return_complex=True)
         
@@ -85,8 +89,8 @@ class UNetRes_FiLM(nn.Module):
             phase = phase.to('cpu')
 
         x = torch.polar(mag, phase)
-        x = torch.istft(x, n_fft=1024, hop_length=512,
-                        win_length=1024,
+        x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop_length,
+                        win_length=self.win_length,
                         window=self.stft_window.to(x.device),
                         return_complex=False)
         return x.to(device)
@@ -143,7 +147,7 @@ class UNetRes_FiLM(nn.Module):
 
         # Recover waveform
         x = self.istft(mag, phase)
-        
+
         return {"waveform": x}
 
 

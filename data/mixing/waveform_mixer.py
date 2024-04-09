@@ -9,7 +9,7 @@ from typing import List
 
 class WaveformMixer(nn.Module):
     def __init__(self, max_mix_num=2, lower_db=-10, higher_db=10,
-                 sampling_rate=32000, max_clip_len=5,):
+                 sampling_rate=32000, max_clip_len=10,):
         super().__init__()
 
         self.max_mix_num = max_mix_num

@@ -10,7 +10,7 @@ data:
         - 'config/datafiles/audiocaps_test_mix.json'
 
     sampling_rate: 32000
-    segment_seconds: 5
+    segment_seconds: 10
     loudness_norm:
         lower_db: -10
         higher_db: 10

@@ -19,7 +19,7 @@ from data.mixing.waveform_mixer import WaveformMixer
 
 
 def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
-                     sr=32000):
+                     sr=32000, skip_existing=False):
     # Read the csv file
     df = pd.read_csv(csv_file)
     df = df.sort_values(by='audiocap_id_target')
@@ -66,7 +66,7 @@ def premix_audiocaps(csv_file, audiocaps_wav_path, mix_wav_path, output_json,
         }
         data.append(data_dict)
 
-        if os.path.exists(out_mix_path):
+        if os.path.exists(out_mix_path) and skip_existing:
             # print(f"Skipping row {index} as mix wav file already exists")
             continue
 

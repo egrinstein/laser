@@ -18,10 +18,12 @@ from models.clap_encoder import ClapEncoder
 from models.bert_encoder import BertEncoder
 from safetensors.torch import save_file
 
+from .add_embeddings_to_audiocaps_json import add_embeddings_to_audiocaps_json
+
 
 def create_commands(in_csv_path, out_dir_path, mode = "e2e",
                     encoder='bert', use_corrector = True, n_jobs = 1,
-                    re_encode = True):
+                    re_encode = True, json_path = None):
     """
 
     Args:
@@ -88,10 +90,11 @@ def create_commands(in_csv_path, out_dir_path, mode = "e2e",
     Parallel(n_jobs=n_jobs, require='sharedmem')(
         delayed(_process_row)(row) for i, row in tqdm(df.iterrows(), total=len(df)))
 
+    add_embeddings_to_audiocaps_json(json_path, out_dir_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create AudioCaps commands')
-    parser.add_argument('--in_csv_dir', type=str, help='Path to input mix.csv files (train, val, test)')
+    parser.add_argument('--in_dir', type=str, help='Path to input mix.csv files (train, val, test)')
     parser.add_argument('--out_dir', type=str, help='Path to output directory where the commands will be saved')
     parser.add_argument('--mode', type=str, default='template', help='Mode to create commands. Either "template" or "e2e"')
     parser.add_argument('--dont_use_corrector', action='store_true', help='Use the corrector to generate commands')
@@ -99,7 +102,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for split in ['train', 'test', 'val']:
-        in_csv_path = os.path.join(args.in_csv_dir, f"audiocaps_{split}_mix.csv")
+        in_csv_path = os.path.join(args.in_dir, "csvs/", f"audiocaps_{split}_mix.csv")
         out_dir_path = os.path.join(args.out_dir, split)
+        json_path = os.path.join(args.in_dir, f"audiocaps_{split}_mix.json")
         create_commands(in_csv_path, out_dir_path, mode=args.mode,
-                        use_corrector=not args.dont_use_corrector, n_jobs=args.n_jobs)
+                        use_corrector=not args.dont_use_corrector, n_jobs=args.n_jobs,
+                        json_path=json_path)

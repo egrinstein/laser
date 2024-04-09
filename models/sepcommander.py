@@ -106,14 +106,14 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
             
             # Compute si-sdr for target
             target_sisdr = scale_invariant_signal_distortion_ratio(model_output, segments)
-            self.avg_sisdr = self._batch_moving_average(self.avg_sisdr, target_sisdr)
+            self.avg_sisdr = self._batch_moving_average(self.avg_sisdr, target_sisdr, batch_idx == 0)
             log_dict[f"{prefix}_sisdr"] = self.avg_sisdr
 
             # Compute q-sdr
             ## Compute si-sdr for interferer
             interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output, interferers)
             qsdr = (target_sisdr > interferer_sisdr).float()
-            self.avg_qsdr = self._batch_moving_average(self.avg_qsdr, qsdr)
+            self.avg_qsdr = self._batch_moving_average(self.avg_qsdr, qsdr, batch_idx == 0)
             log_dict[f"{prefix}_qsdr"] = self.avg_qsdr
 
         self.log_dict(log_dict, prog_bar=True)
@@ -156,7 +156,10 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         return output_dict
     
-    def _batch_moving_average(self, current_avg, new_batch_values):
+    def _batch_moving_average(self, current_avg, new_batch_values, is_first_batch=False):
+        if is_first_batch:
+            return new_batch_values.mean()
+
         for new_value in new_batch_values:
             current_avg = (1 - self.avg_smoothing) * current_avg + \
                 self.avg_smoothing * new_value.item()

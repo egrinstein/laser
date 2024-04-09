@@ -22,18 +22,15 @@ class ClapSimilarity:
         self.clap_encoder = ClapEncoder().eval()
         
     def __call__(self, query1, query2):
-        query_embeddings = self.clap_encoder(
-            modality="text", text=[query1, query2],
-        )
+        query_embeddings = self.clap_encoder(text=[query1, query2])
         distance = torch.nn.functional.cosine_similarity(
             query_embeddings[0].unsqueeze(0),
             query_embeddings[1].unsqueeze(0)
         )
         return distance.item()
 
-
 def mix_audiocaps_csv(input_csv, output_csv, n_mix=-1, caption_similarity_func=None,
-                       caption_similarity_threshold=0.2):
+                       caption_similarity_threshold=0.3):
     df = pd.read_csv(input_csv)
     
     if n_mix == -1:
@@ -96,4 +93,4 @@ if __name__ == '__main__':
 
         print(f"Creating mix.csv file for {split} split")
         
-        mix_audiocaps_csv(in_csv_file, output_csv, n_mix=-1, caption_similarity_func=clap_similarity)
+        mix_audiocaps_csv(in_csv_file, output_csv, n_mix=100, caption_similarity_func=clap_similarity)

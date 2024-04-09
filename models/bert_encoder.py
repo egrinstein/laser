@@ -9,7 +9,7 @@ MODELS = {
 }
 
 class BertEncoder(nn.Module):
-    def __init__(self, dim=256):
+    def __init__(self, dim=256, add_start_token=True):
         super().__init__()
         self.base_model = 'prajjwal1/bert-mini'
         self.dropout = 0.1
@@ -26,7 +26,11 @@ class BertEncoder(nn.Module):
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        self.add_start_token = add_start_token
+
     def tokenize(self, caption):
+        if self.add_start_token:
+            caption = ['[CLS] ' + cap for cap in caption]
         tokenized = self.tokenizer(caption, add_special_tokens=False, padding=True, return_tensors='pt')
         input_ids = tokenized['input_ids']
         attns_mask = tokenized['attention_mask']
