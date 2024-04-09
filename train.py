@@ -122,11 +122,6 @@ def train(args) -> NoReturn:
     resume_checkpoint_path = configs["train"]["checkpoint_path"]
     n_epochs = configs["train"]["n_epochs"]
 
-    if resume_checkpoint_path == "":
-        resume_checkpoint_path = None
-    else:
-        logging.info(f'Finetuning AudioSep with checkpoint [{resume_checkpoint_path}]')
-
     # Get directories and paths
     checkpoints_dir, logs_dir, tf_logs_dir, statistics_path = get_dirs(
         workspace, filename, config_yaml, devices_num,
@@ -149,7 +144,8 @@ def train(args) -> NoReturn:
         ss_model = UNetRes_FiLM(
             channels=input_channels,
             cond_embedding_dim=condition_size,
-            nsrc=output_channels)
+            nsrc=output_channels,
+            only_train_film=only_train_film)
     else:
         raise ValueError(f"Unknown backbone [{backbone}]")
 
@@ -189,7 +185,7 @@ def train(args) -> NoReturn:
         logger=None,
         callbacks=callbacks,
         fast_dev_run=False,
-        max_epochs=200,
+        max_epochs=n_epochs,
         log_every_n_steps=50,
         use_distributed_sampler=True,
         sync_batchnorm=sync_batchnorm,
@@ -201,10 +197,17 @@ def train(args) -> NoReturn:
     # Fit, evaluate, and save checkpoints.
 
     # Load checkpoint resume_checkpoint_path
-    if resume_checkpoint_path is not None:
+    if resume_checkpoint_path:
+        logging.info(f'Finetuning with checkpoint [{resume_checkpoint_path}]')
         weights = torch.load(
-            resume_checkpoint_path, map_location=torch.device('cpu'))['model']
+            resume_checkpoint_path, map_location=torch.device('cpu'))
         new_weights = {}
+        
+        if 'model' in weights.keys():
+            weights = weights['model']
+        elif 'state_dict' in weights.keys():
+            weights = weights['state_dict']
+
         for k, v in weights.items():
             if 'text_embedder.' in k:
                 continue
@@ -214,9 +217,7 @@ def train(args) -> NoReturn:
         logging.info(f'Loaded checkpoint from [{resume_checkpoint_path}]')
 
     trainer.fit(
-        model=pl_model, 
-        train_dataloaders=None,
-        val_dataloaders=None,
+        model=pl_model,
         datamodule=data_module,
     )
 

@@ -75,16 +75,20 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
 
         if prefix == 'train':
             self.ss_model.train()
-        model_output = self.ss_model(input_dict)['waveform']
-        model_output = model_output.squeeze(1)
+        model_output = self.ss_model(input_dict)
+        magnitude = model_output['magnitude']
+        model_output = model_output['waveform'].squeeze(1)
         # (batch_size, 1, segment_samples)
 
-        output_dict = {'segment': model_output}
+        output_dict = {'segment': model_output, 'magnitude': magnitude}
 
         # Calculate loss
         loss = self.loss_function(output_dict, target_dict)
-        self.avg_loss = (1 - self.avg_smoothing) * self.avg_loss + \
-                self.avg_smoothing * loss.item()
+        if batch_idx == 0:
+            self.avg_loss = loss.item()
+        else:
+            self.avg_loss = (1 - self.avg_smoothing) * self.avg_loss + \
+                    self.avg_smoothing * loss.item()
         
         log_dict = {f"{prefix}_loss": self.avg_loss}
         

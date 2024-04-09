@@ -74,12 +74,25 @@ def l1(output, target):
 
 
 def l1_wav(output_dict, target_dict):
-	return l1(output_dict['segment'], target_dict['segment'])
+    return l1(output_dict['segment'], target_dict['segment'])
+
+
+def l1_mag(output_dict, target_dict):
+    wav_target = target_dict['segment']
+    window = torch.hann_window(1024).to(wav_target.device)
+    mag_target = torch.stft(
+        wav_target, n_fft=1024,
+        hop_length=512, win_length=1024,
+        window=window,
+        return_complex=True)
+    
+    return l1(output_dict['magnitude'], mag_target)
 
 
 def get_loss_function(loss_type):
     if loss_type == "l1_wav":
         return l1_wav
-
+    elif loss_type == "l1_mag":
+        return l1_mag
     else:
         raise NotImplementedError("Error!")

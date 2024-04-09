@@ -2,7 +2,7 @@ from .modules import *
 import numpy as np
 
 class UNetRes_FiLM(nn.Module):
-    def __init__(self, channels=1, cond_embedding_dim=256, nsrc=1):
+    def __init__(self, channels=1, cond_embedding_dim=256, nsrc=1, only_train_film=False):
         super().__init__()
         activation = 'relu'
         momentum = 0.01
@@ -65,6 +65,12 @@ class UNetRes_FiLM(nn.Module):
         self.init_weights()
 
         self.stft_window = torch.hann_window(1024)
+
+        if only_train_film:
+            for name, param in self.named_parameters():
+                if "film" not in name:
+                    param.requires_grad = False
+
 
     def init_weights(self):
         init_layer(self.after_conv2)
@@ -141,6 +147,8 @@ class UNetRes_FiLM(nn.Module):
         x = F.pad(x, pad=(0, 2))
         x = x[:, :, 0: origin_len, :]
 
+        x = torch.sigmoid(x)
+
         # Apply mask
         mag = x*mag
         mag = mag[:, 0].permute(0, 2, 1)
@@ -148,7 +156,7 @@ class UNetRes_FiLM(nn.Module):
         # Recover waveform
         x = self.istft(mag, phase)
 
-        return {"waveform": x}
+        return {"waveform": x, "magnitude": mag}
 
 
 if __name__ == "__main__":

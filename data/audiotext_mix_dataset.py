@@ -17,7 +17,7 @@ class AudioTextMixDataset(Dataset):
             with open(datafile, 'r') as fp:
                 data_json = json.load(fp)['data']
                 all_data_json.extend(data_json)
-        self.all_data_json = _filter_missing_files(all_data_json)
+        self.all_data_json = _filter_missing_files(all_data_json, mode='all')
 
         self.sampling_rate = sampling_rate
 
@@ -46,7 +46,6 @@ class AudioTextMixDataset(Dataset):
         out_dict = {
             'input': {
                 'mixture': mix_audio_data.squeeze(1),
-                
                 'caption_target': sample['caption_target'],
             },
             'target': {

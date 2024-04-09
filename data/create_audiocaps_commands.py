@@ -25,7 +25,6 @@ def create_commands(in_csv_path, out_dir_path, mode = "e2e",
                     encoder='bert', use_corrector = True, n_jobs = 1,
                     re_encode = True, json_path = None):
     """
-
     Args:
         in_csv_path (str): path to input mix.csv file
         out_dir_path (str): path to output directory where the commands will be saved
