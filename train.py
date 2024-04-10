@@ -107,12 +107,9 @@ def train(args) -> NoReturn:
     higher_db = configs['data']['loudness_norm']['higher_db']
 
     # Configuration of the separation model
-    query_net = configs['model']['query_net']
-    model_type = configs['model']['model_type']
     input_channels = configs['model']['input_channels']
     output_channels = configs['model']['output_channels']
     condition_size = configs['model']['condition_size']
-    use_text_ratio = configs['model']['use_text_ratio']
     only_train_film = configs["model"]["only_train_film"]
     
     # Configuration of the trainer
@@ -164,7 +161,6 @@ def train(args) -> NoReturn:
         optimizer_type=optimizer_type,
         learning_rate=learning_rate,
         lr_lambda_func=lr_lambda_func,
-        use_text_ratio=use_text_ratio,
     )
 
     checkpoint_every_n_steps = CheckpointEveryNSteps(
