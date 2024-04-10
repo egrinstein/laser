@@ -1,5 +1,5 @@
 ---
-task_name: AudioSep
+task_name: SepCommander
 
 data:
     train_datafiles:
@@ -18,31 +18,29 @@ data:
     is_premixed: true
 
 model:
-    query_net: CLAP
+    backbone: lassnet
+    query_encoder: bert # 'bert' or 'clap'
     condition_size: 256
-    use_text_ratio: 1.0
 
-    model_type: ResUNet30
     input_channels: 1
     output_channels: 1
-    resume_checkpoint: ""
-    only_train_film: true
+    only_train_film: false
 
 train:
     optimizer:
         optimizer_type: AdamW
-        learning_rate: 1e-3
+        learning_rate: 5e-4
         warm_up_steps: 10000
         reduce_lr_steps: 1000000
         lr_lambda_type: constant_warm_up
     num_nodes: 1
     num_workers: 1
-    loss_type: l1_wav
+    loss_type: l1_mag
     sync_batchnorm: True
     batch_size_per_device: 6
     save_step_frequency: 3000  # Save every #save_step_frequency steps.
-    checkpoint_path: null # checkpoint/audiosep_base_4M_steps.ckpt # workspace/AudioSep/checkpoints/train/sepcommands_base,devices=1/step=18000_no_pretrain.ckpt
-    n_epochs: 10
+    checkpoint_path: checkpoint/LASSNet.pt
+    n_epochs: 7
 
-accelerator: gpu
+accelerator: cuda
 device: null
