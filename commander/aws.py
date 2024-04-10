@@ -110,7 +110,6 @@ def random_aws_bedrock_command(client, target_caption, interferer_caption, retur
     response = response_body.get('completion')
 
     print(response)
-    breakpoint()
 
 
 class AwsBedrockCommandCreator:
@@ -119,8 +118,6 @@ class AwsBedrockCommandCreator:
             service_name='bedrock-runtime', 
             region_name="us-east-1"
         )
-
-        breakpoint()
 
     def __call__(self, target_caption, interferer_captions, return_type=False):
         return random_aws_bedrock_command(

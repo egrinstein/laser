@@ -41,7 +41,7 @@ train:
     sync_batchnorm: True
     batch_size_per_device: 6
     save_step_frequency: 3000  # Save every #save_step_frequency steps.
-    checkpoint_path: checkpoint/audiosep_base_4M_steps.ckpt # workspace/AudioSep/checkpoints/train/sepcommands_base,devices=1/step=18000_no_pretrain.ckpt
+    checkpoint_path: #checkpoint/audiosep_base_4M_steps.ckpt # workspace/AudioSep/checkpoints/train/sepcommands_base,devices=1/step=18000_no_pretrain.ckpt
     n_epochs: 10
 
 accelerator: gpu
