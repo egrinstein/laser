@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import yaml
 
-from models.metrics import get_loss_function
+from models.metrics import Loss
 from models.sepcommander import AudioSep
 from models.resunet import ResUNet30
 from data.audiotext_dataset import AudioTextDataLoader
@@ -146,7 +146,7 @@ def load_ss_model(
         checkpoint_path=checkpoint_path,
         strict=False,
         ss_model=ss_model,
-        loss_function=get_loss_function(configs['train']['loss_type']),
+        loss_function=Loss(configs['train']['loss_type']),
         optimizer_type=None,
         learning_rate=None,
         lr_lambda_func=None,
@@ -254,21 +254,25 @@ def get_data_module(
             shuffle=True,
         )
 
+        val_dataloader = None
         if 'val_datafiles' in configs['data']:
             val_datafiles = configs['data']['val_datafiles']
             val_dataloader = AudioTextMixDataLoader(
                 datafiles=val_datafiles, 
                 sampling_rate=sampling_rate,
                 batch_size=batch_size,
+                shuffle=True
             )
 
-        if 'test_datafiles' in configs['data']:
-            test_datafiles = configs['data']['test_datafiles']
-            test_dataloader = AudioTextMixDataLoader(
-                datafiles=test_datafiles, 
-                sampling_rate=sampling_rate,
-                batch_size=batch_size,
-            )
+        test_dataloader = None
+        # if 'test_datafiles' in configs['data']:
+        #     test_datafiles = configs['data']['test_datafiles']
+        #     test_dataloader = AudioTextMixDataLoader(
+        #         datafiles=test_datafiles, 
+        #         sampling_rate=sampling_rate,
+        #         batch_size=batch_size,
+        #         shuffle=True
+        #     )
         
     # data module
     data_module = DataModule(

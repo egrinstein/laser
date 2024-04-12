@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from scipy.signal import get_window
 import librosa.util as librosa_util
-from librosa.util import pad_center, tiny
+from librosa.util import tiny
 # from audio_processing import window_sumsquare
 
 
@@ -43,7 +43,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=1024,
     # Compute the squared window at the desired length
     win_sq = get_window(window, win_length, fftbins=True)
     win_sq = librosa_util.normalize(win_sq, norm=norm)**2
-    win_sq = librosa_util.pad_center(win_sq, n_fft)
+    win_sq = librosa_util.pad_center(win_sq, size=n_fft)
 
     # Fill the envelope
     for i in range(n_frames):
@@ -76,7 +76,7 @@ class STFT(torch.nn.Module):
             assert(filter_length >= win_length)
             # get window and zero center pad it to filter_length
             fft_window = get_window(window, win_length, fftbins=True)
-            fft_window = pad_center(fft_window, filter_length)
+            fft_window = librosa_util.pad_center(fft_window, size=filter_length)
             fft_window = torch.from_numpy(fft_window).float()
 
             # window the bases

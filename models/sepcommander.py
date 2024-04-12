@@ -41,6 +41,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         self.avg_sisdr = 0
         self.avg_qsdr = 0
         self.avg_loss = 0
+        self.avg_sisdr_tp = 0
         self.avg_smoothing = 0.01
 
     def forward(self, x):
@@ -120,6 +121,14 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
             self.avg_qsdr = self._batch_moving_average(self.avg_qsdr, qsdr, batch_idx == 0)
             log_dict[f"{prefix}_qsdr"] = self.avg_qsdr
 
+            # Compute tp-sdr: SDR for samples x where q-sdr(x) == 1
+            tp_idxs = qsdr == 1
+            tp_sisdr = target_sisdr[tp_idxs]
+            if len(tp_sisdr) != 0:
+                self.avg_sisdr_tp = self._batch_moving_average(self.avg_sisdr_tp, tp_sisdr, batch_idx == 0)
+                log_dict[f"{prefix}_sisdr_tp"] = self.avg_sisdr_tp
+
+
         self.log_dict(log_dict, prog_bar=True)
         
         return loss
@@ -134,28 +143,12 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         return self._step(batch, batch_idx, prefix='test')
     
     def configure_optimizers(self):
-
-        if self.optimizer_type == "AdamW":
-            optimizer = optim.AdamW(
-                params=self.ss_model.parameters(),
-                lr=self.learning_rate,
-                betas=(0.9, 0.999),
-                eps=1e-08,
-                weight_decay=0.0,
-                amsgrad=True,
-            )
-        else:
-            raise NotImplementedError
-
-        scheduler = LambdaLR(optimizer, self.lr_lambda_func)
+        optimizer = optim.Adam(
+            params=self.ss_model.parameters(),
+        )
 
         output_dict = {
             "optimizer": optimizer,
-            "lr_scheduler": {
-                'scheduler': scheduler,
-                'interval': 'step',
-                'frequency': 1,
-            }
         }
 
         return output_dict

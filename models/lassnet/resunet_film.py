@@ -1,4 +1,6 @@
 from .modules import *
+from .stft import STFT
+
 import numpy as np
 
 class UNetRes_FiLM(nn.Module):
@@ -64,7 +66,8 @@ class UNetRes_FiLM(nn.Module):
 
         self.init_weights()
 
-        self.stft_window = torch.hann_window(1024)
+        # self.stft_window = torch.hann_window(1024)
+        self.stft = STFT()
 
         if only_train_film:
             for name, param in self.named_parameters():
@@ -75,31 +78,32 @@ class UNetRes_FiLM(nn.Module):
     def init_weights(self):
         init_layer(self.after_conv2)
 
-    def stft(self, input):
-        device = input.device
-        if device.type == 'mps':
-            input = input.to('cpu')
+    # def stft(self, input):
+    #     device = input.device
+    #     if device.type == 'mps':
+    #         input = input.to('cpu')
     
-        result = torch.stft(input, n_fft=self.n_fft, hop_length=self.hop_length,
-                            win_length=self.win_length,
-                            window=self.stft_window.to(input.device),
-                            return_complex=True)
+        # result = torch.stft(input, n_fft=self.n_fft, hop_length=self.hop_length,
+        #                     win_length=self.win_length,
+        #                     window=self.stft_window.to(input.device),
+        #                     return_complex=True)
+        # mag, phase = result.abs(), result.angle()
+
         
-        mag, phase = result.abs(), result.angle()
-        return mag.to(device), phase.to(device)
+        # return mag.to(device), phase.to(device)
 
-    def istft(self, mag, phase):
-        device = mag.device
-        if device.type == 'mps':
-            mag = mag.to('cpu')
-            phase = phase.to('cpu')
+    # def istft(self, mag, phase):
+    #     device = mag.device
+    #     if device.type == 'mps':
+    #         mag = mag.to('cpu')
+    #         phase = phase.to('cpu')
 
-        x = torch.polar(mag, phase)
-        x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop_length,
-                        win_length=self.win_length,
-                        window=self.stft_window.to(x.device),
-                        return_complex=False)
-        return x.to(device)
+    #     x = torch.polar(mag, phase)
+    #     x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop_length,
+    #                     win_length=self.win_length,
+    #                     window=self.stft_window.to(x.device),
+    #                     return_complex=False)
+    #     return x.to(device)
 
     def forward(self, input_dict):
         """
@@ -114,7 +118,8 @@ class UNetRes_FiLM(nn.Module):
         waveform = input_dict["mixture"][:, 0, :]
         cond_vec = input_dict["condition"][:, 0, :]
 
-        mag, phase = self.stft(waveform)
+        #mag, phase = self.stft(waveform)
+        mag, phase = self.stft.transform(waveform)
         mag = mag.unsqueeze(1)  # (bs, 1, F, T)
         mag = mag.permute(0, 1, 3, 2)  # (bs, 1, T, F)
 
@@ -154,7 +159,7 @@ class UNetRes_FiLM(nn.Module):
         mag = mag[:, 0].permute(0, 2, 1)
 
         # Recover waveform
-        x = self.istft(mag, phase)
+        x = self.stft.inverse(mag, phase)
 
         return {"waveform": x, "magnitude": mag}
 

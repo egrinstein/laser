@@ -10,14 +10,14 @@ class AudioTextMixDataset(Dataset):
     """Can sample data from audio-text-mix databases"""
     def __init__(
         self,
-        datafiles, sampling_rate=32000,
+        datafiles, sampling_rate=32000, filter_mode='remove_mixed'
     ):
         all_data_json = []
         for datafile in datafiles:
             with open(datafile, 'r') as fp:
                 data_json = json.load(fp)['data']
                 all_data_json.extend(data_json)
-        self.all_data_json = _filter_missing_files(all_data_json, mode='all')
+        self.all_data_json = _filter_missing_files(all_data_json, mode=filter_mode)
 
         self.sampling_rate = sampling_rate
 
@@ -80,7 +80,7 @@ def _filter_missing_files(data_json, mode='all'):
     filtered_data_json = []
 
     for sample in data_json:
-        if 'wav_mixture' not in sample: 
+        if 'wav_mixture' not in sample or 'command_embedding' not in sample: 
             continue
         else:
             filtered_data_json.append(sample)

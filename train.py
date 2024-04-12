@@ -9,7 +9,7 @@ from typing import List, NoReturn
 from torch.utils.tensorboard import SummaryWriter
 from models.resunet import ResUNet30
 from models.lassnet import UNetRes_FiLM
-from models.metrics import get_loss_function
+from models.metrics import Loss
 from models.sepcommander import AudioSep
 from callbacks.base import CheckpointEveryNSteps
 from models.lr_schedulers import get_lr_lambda
@@ -158,7 +158,7 @@ def train(args) -> NoReturn:
     # pytorch-lightning model
     pl_model = AudioSep(
         ss_model=ss_model,
-        loss_function=get_loss_function(
+        loss_function=Loss(
             configs['train']['loss_type']),
         optimizer_type=optimizer_type,
         learning_rate=learning_rate,
@@ -209,11 +209,11 @@ def train(args) -> NoReturn:
             weights = weights['state_dict']
 
         for k, v in weights.items():
-            if 'text_embedder.' in k:
+            if 'text_embedder.' in k or 'stft.' in k:
                 continue
             new_weights[k.replace('module.', 'ss_model.').replace('.UNet', '')] = v
         weights = new_weights
-        pl_model.load_state_dict(weights, strict=True)
+        pl_model.load_state_dict(weights, strict=False)
         logging.info(f'Loaded checkpoint from [{resume_checkpoint_path}]')
 
     trainer.fit(

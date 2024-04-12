@@ -37,24 +37,10 @@ class DataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.batch_size = batch_size
 
-
     def prepare_data(self):
         # download, split, etc...
         # only called on 1 GPU/TPU in distributed
         pass
-
-    def setup(self, stage: Optional[str] = None) -> NoReturn:
-        r"""called on every device."""
-
-        # make assignments here (val/train/test split)
-        # called on every process in DDP
-
-        # SegmentSampler is used for selecting segments for training.
-        # On multiple devices, each SegmentSampler samples a part of mini-batch
-        # data.
-        # self.train_dataloader = self._train_dataloader
-        # self.test_dataloader = self._test_dataloader
-
 
     def train_dataloader(self) -> torch.utils.data.DataLoader:
         r"""Get train loader."""
@@ -71,7 +57,3 @@ class DataModule(pl.LightningDataModule):
         
         return self._test_dataloader
 
-    def teardown(self):
-        # clean up after fit or test
-        # called on every process in DDP
-        pass

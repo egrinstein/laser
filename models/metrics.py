@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from .lassnet.stft import STFT
 
 def energy(x):
     return torch.mean(x ** 2)
@@ -69,30 +70,29 @@ def calculate_sisdr(ref, est):
     return sisdr 
 
 
+class Loss(torch.nn.Module):
+    def __init__(self, loss_type):
+        super().__init__()
+        self.type = loss_type
+
+        if loss_type == 'l1_mag':
+            self.stft = STFT()
+
+    def forward(self, output_dict, target_dict):
+        if self.type == 'l1_wav':
+            return l1_wav(output_dict, target_dict)
+        elif self.type == 'l1_mag':
+            return self.l1_mag(output_dict, target_dict)
+
+    def l1_mag(self, output_dict, target_dict):
+        wav_target = target_dict['segment']
+        mag_target = self.stft.transform(wav_target)[0]
+        return l1(output_dict['magnitude'], mag_target)
+
+
 def l1(output, target):
     return torch.mean(torch.abs(output - target))
 
 
 def l1_wav(output_dict, target_dict):
     return l1(output_dict['segment'], target_dict['segment'])
-
-
-def l1_mag(output_dict, target_dict):
-    wav_target = target_dict['segment']
-    window = torch.hann_window(1024).to(wav_target.device)
-    mag_target = torch.stft(
-        wav_target, n_fft=1024,
-        hop_length=512, win_length=1024,
-        window=window,
-        return_complex=True)
-    
-    return l1(output_dict['magnitude'], mag_target)
-
-
-def get_loss_function(loss_type):
-    if loss_type == "l1_wav":
-        return l1_wav
-    elif loss_type == "l1_mag":
-        return l1_mag
-    else:
-        raise NotImplementedError("Error!")
