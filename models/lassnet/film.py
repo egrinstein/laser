@@ -1,14 +1,23 @@
 import torch
 import torch.nn as nn
 
+
 class Film(nn.Module):
-    def __init__(self, channels, cond_embedding_dim):
-        super(Film, self).__init__()
+    def __init__(self, channels, cond_embedding_dim, n_layers=2, dropout_rate=0.1,
+                 batch_norm=False):
+        super().__init__()
+        
         self.linear = nn.Sequential(
             nn.Linear(cond_embedding_dim, channels * 2),
             nn.ReLU(inplace=True),
+            nn.Dropout(dropout_rate),
             nn.Linear(channels * 2, channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout_rate)
+            
+            # Uncomment and comment above for 1 layer only
+            # nn.Linear(cond_embedding_dim, channels),
+            # nn.ReLU(inplace=True)
         )
 
     def forward(self, data, cond_vec):

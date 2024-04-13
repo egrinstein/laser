@@ -7,7 +7,7 @@ from .film import Film
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, activation, momentum):
-        super(ConvBlock, self).__init__()
+        super().__init__()
 
         self.activation = activation
         padding = (kernel_size[0] // 2, kernel_size[1] // 2)
@@ -130,6 +130,7 @@ class EncoderBlockRes1B(nn.Module):
         encoder_pool = F.avg_pool2d(encoder, kernel_size=self.downsample)
         return encoder_pool, encoder
 
+
 class DecoderBlockRes1B(nn.Module):
     def __init__(self, in_channels, out_channels, stride, activation, momentum):
         super(DecoderBlockRes1B, self).__init__()
@@ -233,6 +234,7 @@ class EncoderBlockRes4BCond(nn.Module):
         encoder_pool = F.avg_pool2d(encoder, kernel_size=self.downsample)
         return encoder_pool, encoder
 
+
 class DecoderBlockRes4BCond(nn.Module):
     def __init__(self, in_channels, out_channels, stride, activation, momentum, cond_embedding_dim):
         super(DecoderBlockRes4B, self).__init__()
@@ -269,6 +271,7 @@ class DecoderBlockRes4BCond(nn.Module):
         x = self.conv_block5(x, cond_vec)
         return x
 
+
 class EncoderBlockRes4B(nn.Module):
     def __init__(self, in_channels, out_channels, downsample, activation, momentum):
         super(EncoderBlockRes4B, self).__init__()
@@ -287,6 +290,7 @@ class EncoderBlockRes4B(nn.Module):
         encoder = self.conv_block4(encoder)
         encoder_pool = F.avg_pool2d(encoder, kernel_size=self.downsample)
         return encoder_pool, encoder
+
 
 class DecoderBlockRes4B(nn.Module):
     def __init__(self, in_channels, out_channels, stride, activation, momentum):
@@ -323,6 +327,7 @@ class DecoderBlockRes4B(nn.Module):
         x = self.conv_block4(x)
         x = self.conv_block5(x)
         return x
+
 
 class ConvBlockResCond(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, activation, momentum, cond_embedding_dim):
@@ -378,6 +383,7 @@ class ConvBlockResCond(nn.Module):
             return residual + x
         else:
             return origin + x
+
 
 class ConvBlockRes(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, activation, momentum):
@@ -482,3 +488,76 @@ def act(x, activation):
 
     else:
         raise Exception('Incorrect activation!')
+
+
+class Mlp(nn.Module):
+    """Multi-layer perceptron"""
+
+    def __init__(self, in_features, out_features, hidden_features,
+                 num_layers, activation="relu", dropout=0, batch_norm=False,
+                 output_activation=None, dtype=torch.float32):
+        super().__init__()
+
+        self.blocks = nn.ModuleList()
+        self.dtype = dtype
+
+        if num_layers == 1:
+            self.blocks.append(
+                self._create_mlp_block(in_features, out_features,
+                                       batch_norm, activation, dropout)
+            )
+        else:
+            for i in range(num_layers):
+                if i == 0: # First layer
+                    in_features_i = in_features
+                    out_features_i = hidden_features
+                    activation = activation
+                elif i < num_layers - 1: # Hidden layers
+                    in_features_i = hidden_features
+                    out_features_i = hidden_features
+                    activation = activation
+                else: # Last layer
+                    in_features_i = hidden_features
+                    out_features_i = out_features
+                    activation = output_activation
+
+                self.blocks.append(
+                    self._create_mlp_block(in_features_i, out_features_i,
+                                            batch_norm, activation, dropout)
+                )
+
+    def _create_mlp_block(self, in_features, out_features, batch_norm, activation, dropout):
+        layers = nn.ModuleList()
+        layers.append(nn.Linear(in_features, out_features, dtype=self.dtype))
+        if batch_norm:
+            layers.append(nn.BatchNorm1d(out_features, dtype=self.dtype))
+        if activation is not None:
+            if activation == "relu":
+                activation = nn.ReLU()
+            elif activation == "prelu":
+                activation = nn.PReLU()
+            elif isinstance(activation, nn.Module):
+                pass
+            else:
+                raise ValueError(f"Activation type '{activation}' is not known")
+            layers.append(activation)
+        if dropout > 0:
+            layers.append(nn.Dropout(dropout))
+        return nn.Sequential(*layers)
+    
+    def forward(self, x):
+        for block in self.blocks:
+            for layer in block:
+                if isinstance(layer, nn.BatchNorm1d):
+                    if len(x.shape) == 3:
+                        # BatchNorm1d expects the features in the second dimension
+                        # while a linear layer expects features in the last dimension
+                        x = layer(x.transpose(1, 2)).transpose(1, 2)
+                    elif len(x.shape) == 2:
+                        x = layer(x)
+                    else:
+                        raise Exception("Input should be 2D or 3D")
+                else:
+                    x = layer(x)
+
+        return x

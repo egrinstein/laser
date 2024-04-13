@@ -152,6 +152,45 @@ class STFT(torch.nn.Module):
         reconstruction = self.inverse(self.magnitude, self.phase)
         return reconstruction 
 
+
+class TorchStft(torch.nn.Module):
+    def __init__(self, filter_length=1024,
+                 hop_length=512, win_length=1024):
+        
+        super().__init__()
+
+        self.n_fft = filter_length
+        self.hop_length = hop_length
+        self.win_length = win_length
+        self.stft_window = torch.hann_window(1024)
+        
+    def transform(self, input):
+        device = input.device
+        if device.type == 'mps':
+            input = input.to('cpu')
+    
+        result = torch.stft(input, n_fft=self.n_fft, hop_length=self.hop_length,
+                            win_length=self.win_length,
+                            window=self.stft_window.to(input.device),
+                            return_complex=True)
+        
+        mag, phase = result.abs(), result.angle()
+        return mag.to(device), phase.to(device)
+
+    def inverse(self, mag, phase):
+        device = mag.device
+        if device.type == 'mps':
+            mag = mag.to('cpu')
+            phase = phase.to('cpu')
+
+        x = torch.polar(mag, phase)
+        x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop_length,
+                        win_length=self.win_length,
+                        window=self.stft_window.to(x.device),
+                        return_complex=False)
+        return x.to(device)
+
+
 if __name__ == '__main__':
     a = torch.randn(4, 320000)
     stft = STFT()

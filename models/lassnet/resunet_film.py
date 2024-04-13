@@ -1,10 +1,13 @@
 from .modules import *
-from .stft import STFT
+from .stft import STFT, TorchStft
 
 import numpy as np
+import torch
+
 
 class UNetRes_FiLM(nn.Module):
-    def __init__(self, channels=1, cond_embedding_dim=256, nsrc=1, only_train_film=False):
+    def __init__(self, channels=1, cond_embedding_dim=256, nsrc=1, only_train_film=False,
+                 n_layers_embedding_mlp=2):
         super().__init__()
         activation = 'relu'
         momentum = 0.01
@@ -16,6 +19,15 @@ class UNetRes_FiLM(nn.Module):
         self.nsrc = nsrc
         self.channels = channels
         self.downsample_ratio = 2 ** 6  # This number equals 2^{#encoder_blocks}
+
+        # Specialize the bert embeddings for improving conditioning
+        self.text_embedding_mlp = Mlp(
+            cond_embedding_dim, cond_embedding_dim, cond_embedding_dim,
+                 n_layers_embedding_mlp, activation=activation, dropout=0, batch_norm=True,
+                 output_activation=None)
+
+        # Normalize magnitude input
+        self.bn_mag = torch.nn.BatchNorm2d(1, momentum=momentum)
 
         self.encoder_block1 = EncoderBlockRes2BCond(in_channels=channels * nsrc, out_channels=32,
                                                     downsample=(2, 2), activation=activation, momentum=momentum,
@@ -66,44 +78,15 @@ class UNetRes_FiLM(nn.Module):
 
         self.init_weights()
 
-        # self.stft_window = torch.hann_window(1024)
-        self.stft = STFT()
+        self.stft = TorchStft() #STFT()
 
         if only_train_film:
             for name, param in self.named_parameters():
                 if "film" not in name:
                     param.requires_grad = False
 
-
     def init_weights(self):
         init_layer(self.after_conv2)
-
-    # def stft(self, input):
-    #     device = input.device
-    #     if device.type == 'mps':
-    #         input = input.to('cpu')
-    
-        # result = torch.stft(input, n_fft=self.n_fft, hop_length=self.hop_length,
-        #                     win_length=self.win_length,
-        #                     window=self.stft_window.to(input.device),
-        #                     return_complex=True)
-        # mag, phase = result.abs(), result.angle()
-
-        
-        # return mag.to(device), phase.to(device)
-
-    # def istft(self, mag, phase):
-    #     device = mag.device
-    #     if device.type == 'mps':
-    #         mag = mag.to('cpu')
-    #         phase = phase.to('cpu')
-
-    #     x = torch.polar(mag, phase)
-    #     x = torch.istft(x, n_fft=self.n_fft, hop_length=self.hop_length,
-    #                     win_length=self.win_length,
-    #                     window=self.stft_window.to(x.device),
-    #                     return_complex=False)
-    #     return x.to(device)
 
     def forward(self, input_dict):
         """
@@ -123,8 +106,13 @@ class UNetRes_FiLM(nn.Module):
         mag = mag.unsqueeze(1)  # (bs, 1, F, T)
         mag = mag.permute(0, 1, 3, 2)  # (bs, 1, T, F)
 
+        mag_norm = self.bn_mag(mag)
+
+        #cond_vec = self.text_embedding_mlp(cond_vec)
+
         dec_cond_vec = cond_vec
-        x = mag
+        x = mag_norm
+
         # Pad spectrogram to be evenly divided by downsample ratio.
         origin_len = x.shape[2]  # time_steps
         pad_len = int(np.ceil(x.shape[2] / self.downsample_ratio)) * self.downsample_ratio - origin_len
