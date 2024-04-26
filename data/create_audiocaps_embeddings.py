@@ -22,7 +22,7 @@ from .add_embeddings_to_audiocaps_json import add_embeddings_to_audiocaps_json
 
 
 def create_commands(in_csv_path, out_dir_path, mode = "e2e",
-                    encoder='bert', use_corrector = True, n_jobs = 1,
+                    encoder='clap', use_corrector = False, n_jobs = 1,
                     re_encode = True, json_path = None):
     """
     Args:
@@ -41,7 +41,7 @@ def create_commands(in_csv_path, out_dir_path, mode = "e2e",
     if encoder == 'bert':
         encoder = BertEncoder().eval()
     elif encoder == 'clap':
-        encoder = ClapEncoder().eval()
+        encoder = ClapEncoder().cuda().eval()
 
     def _process_row(row):
         target_caption = row['caption_target']

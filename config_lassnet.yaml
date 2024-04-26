@@ -1,0 +1,47 @@
+---
+task_name: AudioSep
+
+data:
+    train_datafiles:
+        - 'config/datafiles/jsons/audiocaps_train.json'
+    val_datafiles:
+        - 'config/datafiles/jsons/audiocaps_val.json'
+    test_datafiles:
+        - 'config/datafiles/jsons/audiocaps_test.json'
+
+    sampling_rate: 32000
+    segment_seconds: 10
+    loudness_norm:
+        lower_db: -10
+        higher_db: 10
+    max_mix_num: 2
+    is_premixed: false
+    query_augmentation: false
+
+model:
+    backbone: lassnet
+    query_encoder: bert # 'bert' or 'clap'
+    condition_size: 256 # 256
+
+    input_channels: 1
+    output_channels: 1
+    only_train_film: false
+
+train:
+    optimizer:
+        optimizer_type: Adam
+        learning_rate: 1e-3
+        warm_up_steps: 10000
+        reduce_lr_steps: 1000000
+        lr_lambda_type: constant_warm_up
+    num_nodes: 1
+    num_workers: 1
+    loss_type: l1_mag
+    sync_batchnorm: True
+    batch_size_per_device: 16
+    save_step_frequency: 3000  # Save every #save_step_frequency steps.
+    checkpoint_path: null #checkpoint/LASSNet.pt # checkpoint/lassnet_captions.ckpt
+    n_epochs: 100
+
+accelerator: cuda
+device: null

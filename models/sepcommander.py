@@ -77,12 +77,14 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
         if prefix == 'train':
             self.ss_model.train()
         model_output = self.ss_model(input_dict)
-        magnitude = model_output['magnitude']
-        model_output = model_output['waveform'].squeeze(1)
+
+        waveform = model_output['waveform'].squeeze(1)
         # (batch_size, 1, segment_samples)
 
-        output_dict = {'segment': model_output, 'magnitude': magnitude}
-
+        output_dict = {'segment': waveform}
+        if 'magnitude' in model_output.keys():
+            output_dict['magnitude'] = model_output['magnitude']
+            
         # Calculate loss
         loss = self.loss_function(output_dict, target_dict)
         if batch_idx == 0:
@@ -100,23 +102,23 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
                 raise ValueError("Only a single interferer is currently supported.")
             else:
                 interferers = interferers[:, 0, 0]
-            if model_output.device.type == "mps":
+            if waveform.device.type == "mps":
                 # SDR calculation is not supported on mps
-                model_output = model_output.cpu()
+                waveform = waveform.cpu()
                 segments = segments.cpu()
                 interferers = interferers.cpu()
 
-            # sdr = signal_distortion_ratio(model_output, segments)
+            # sdr = signal_distortion_ratio(waveform, segments)
             # log_dict[f"{prefix}_sdr"] = sdr.mean()
             
             # Compute si-sdr for target
-            target_sisdr = scale_invariant_signal_distortion_ratio(model_output, segments)
+            target_sisdr = scale_invariant_signal_distortion_ratio(waveform, segments)
             self.avg_sisdr = self._batch_moving_average(self.avg_sisdr, target_sisdr, batch_idx == 0)
             log_dict[f"{prefix}_sisdr"] = self.avg_sisdr
 
             # Compute q-sdr
             ## Compute si-sdr for interferer
-            interferer_sisdr = scale_invariant_signal_distortion_ratio(model_output, interferers)
+            interferer_sisdr = scale_invariant_signal_distortion_ratio(waveform, interferers)
             qsdr = (target_sisdr > interferer_sisdr).float()
             self.avg_qsdr = self._batch_moving_average(self.avg_qsdr, qsdr, batch_idx == 0)
             log_dict[f"{prefix}_qsdr"] = self.avg_qsdr

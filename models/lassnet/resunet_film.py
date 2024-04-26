@@ -99,7 +99,10 @@ class UNetRes_FiLM(nn.Module):
         """
 
         waveform = input_dict["mixture"][:, 0, :]
-        cond_vec = input_dict["condition"][:, 0, :]
+        if input_dict["condition"].dim() == 2:
+            cond_vec = input_dict["condition"]
+        else:
+            cond_vec = input_dict["condition"][:, 0, :]
 
         #mag, phase = self.stft(waveform)
         mag, phase = self.stft.transform(waveform)

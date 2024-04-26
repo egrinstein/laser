@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from commander import random_template_command
 from data.mixing.waveform_mixer import WaveformMixer
+from models.bert_encoder import BertEncoder
 from models.clap_encoder import ClapEncoder
 
 
@@ -104,6 +105,7 @@ class AudioTextDataLoader(DataLoader):
         lower_db=-40,
         higher_db=0,
         query_augmentation=True,
+        encoder='clap',
         device=None, *args, **kwargs):
         
         self._dataset = AudioTextDataset(
@@ -118,8 +120,12 @@ class AudioTextDataLoader(DataLoader):
             higher_db=higher_db
         )
 
-        self.query_encoder = ClapEncoder().eval().to(device)
-
+        if encoder == 'bert':
+            self.query_encoder = BertEncoder().eval().to(device)
+        elif encoder == 'clap':
+            self.query_encoder = ClapEncoder().eval().to(device)
+        else:
+            raise ValueError(f"Unsupported encoder: {encoder}")
 
         self.device = device
         if device is None:
@@ -176,13 +182,15 @@ class AudioTextDataLoader(DataLoader):
                 random_template_command(t, mt)
                 for t, mt in z
             ]
+        else:
+            batch_text = at_data_dict['text']
 
         # calculate text embed for audio-text data
-        conditions = self.query_encoder(
-            modality='text',
-            text=batch_text,
-            audio=segments.squeeze(1),
-        )
+        conditions = self.query_encoder(batch_text)
+            # modality='text',
+            # text=batch_text,
+            # audio=segments.squeeze(1),
+        # )
 
         return {
             'input': {

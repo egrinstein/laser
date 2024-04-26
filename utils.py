@@ -217,6 +217,8 @@ def get_data_module(
             batch_size=batch_size,
             shuffle=True,
             device=device,
+            query_augmentation=configs['data']['query_augmentation'],
+            encoder=configs['model']['query_encoder']
         )
 
         test_dataloader = None
@@ -231,6 +233,8 @@ def get_data_module(
                     batch_size=batch_size,
                     shuffle=False,
                     device=device,
+                    query_augmentation=configs['data']['query_augmentation'],
+                    encoder=configs['model']['query_encoder']
                 )
 
         val_dataloader = None
@@ -245,6 +249,8 @@ def get_data_module(
                     batch_size=batch_size,
                     shuffle=False,
                     device=device,
+                    query_augmentation=configs['data']['query_augmentation'],
+                    encoder=configs['model']['query_encoder']
                 )
     else:    
         train_dataloader = AudioTextMixDataLoader(
