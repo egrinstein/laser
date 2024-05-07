@@ -13,7 +13,7 @@ import librosa
 import lightning.pytorch as pl
 from models.clap_encoder import ClapEncoder
 
-sys.path.append('../AudioSep/')
+# sys.path.append('../AudioSep/')
 from models.metrics import (
     calculate_sdr,
     calculate_sisdr,
@@ -77,7 +77,7 @@ class AudioCapsEvaluator:
                     text = [labels]
 
                 conditions = pl_model.query_encoder(
-                    modality='text',
+                    # modality='text',
                     text=text,
                 )
                     
@@ -96,6 +96,8 @@ class AudioCapsEvaluator:
                 sdr = calculate_sdr(ref=source, est=sep_segment)
                 sdri = sdr - sdr_no_sep
                 sisdr = calculate_sisdr(ref=source, est=sep_segment)
+
+                # qsdr = (target_sisdr > interferer_sisdr).float()
 
                 sisdrs_list.append(sisdr)
                 sdris_list.append(sdri)

@@ -126,7 +126,7 @@ def load_ss_model(
 
     configs = parse_yaml(config_yaml)
 
-    ss_model_type = configs["model"]["model_type"]
+    # ss_model_type = configs["model"]["model_type"]
     input_channels = configs["model"]["input_channels"]
     output_channels = configs["model"]["output_channels"]
     condition_size = configs["model"]["condition_size"]
